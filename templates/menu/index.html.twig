@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nos menus — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main>
+        <h1>Nos menus</h1>
+
+        {% for menu in menus %}
+            <article>
+                <h2>{{ menu.nom }}</h2>
+                <p>{{ menu.description }}</p>
+
+                <p>
+                    Minimum : {{ menu.minimumPersonnes }} personnes
+                </p>
+
+                <p>
+                    Prix pour ce minimum :
+                    {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    Prix par personne :
+                    {{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    Thème : {{ menu.theme.libelle }}
+                    — Régime : {{ menu.regime.libelle }}
+                </p>
+
+                {% if menu.stockCommandes > 0 %}
+                    <p>{{ menu.stockCommandes }} commandes disponibles</p>
+                {% else %}
+                    <p>Indisponible</p>
+                {% endif %}
+            </article>
+        {% else %}
+            <p>Aucun menu disponible pour le moment.</p>
+        {% endfor %}
+    </main>
+{% endblock %}
