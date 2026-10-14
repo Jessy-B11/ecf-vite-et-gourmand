@@ -3,11 +3,13 @@
 {% block title %}Nos menus — Vite & Gourmand{% endblock %}
 
 {% block body %}
-    <main>
+    <main class="container">
         <h1>Nos menus</h1>
 
         {% for menu in menus %}
-            <article>
+            <article class="menu-card">
+                <div class="menus-grid">
+
                 <h2>{{ menu.nom }}</h2>
                 <p>{{ menu.description }}</p>
 
@@ -39,5 +41,6 @@
         {% else %}
             <p>Aucun menu disponible pour le moment.</p>
         {% endfor %}
+        </div>
     </main>
 {% endblock %}
