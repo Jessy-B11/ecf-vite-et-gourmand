@@ -1,3 +1,4 @@
+BEGIN;
 INSERT INTO theme (libelle)
 VALUES
     ('Noël'),
@@ -74,3 +75,4 @@ INSERT INTO menu_plat (menu_id, plat_id)
 VALUES
     (1, 2),
     (1, 3);
+COMMIT;
