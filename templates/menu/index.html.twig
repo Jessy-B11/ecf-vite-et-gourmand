@@ -6,41 +6,46 @@
     <main class="container">
         <h1>Nos menus</h1>
 
-        {% for menu in menus %}
-            <article class="menu-card">
-                <div class="menus-grid">
+        <div class="menus-grid">
+            {% for menu in menus %}
+                <article class="menu-card">
+                    <h2>{{ menu.nom }}</h2>
+                    <p>{{ menu.description }}</p>
 
-                <h2>{{ menu.nom }}</h2>
-                <p>{{ menu.description }}</p>
+                    <p>
+                        Minimum : {{ menu.minimumPersonnes }} personnes
+                    </p>
 
-                <p>
-                    Minimum : {{ menu.minimumPersonnes }} personnes
-                </p>
+                    <p>
+                        Prix pour ce minimum :
+                        {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} €
+                    </p>
 
-                <p>
-                    Prix pour ce minimum :
-                    {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} €
-                </p>
+                    <p>
+                        Prix par personne :
+                        {{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} €
+                    </p>
 
-                <p>
-                    Prix par personne :
-                    {{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} €
-                </p>
+                    <p>
+                        Thème : {{ menu.theme.libelle }}
+                        — Régime : {{ menu.regime.libelle }}
+                    </p>
 
-                <p>
-                    Thème : {{ menu.theme.libelle }}
-                    — Régime : {{ menu.regime.libelle }}
-                </p>
+                    {% if menu.stockCommandes > 0 %}
+                        <p>{{ menu.stockCommandes }} commandes disponibles</p>
+                    {% else %}
+                        <p>Indisponible</p>
+                    {% endif %}
 
-                {% if menu.stockCommandes > 0 %}
-                    <p>{{ menu.stockCommandes }} commandes disponibles</p>
-                {% else %}
-                    <p>Indisponible</p>
-                {% endif %}
-            </article>
-        {% else %}
-            <p>Aucun menu disponible pour le moment.</p>
-        {% endfor %}
+                    <p>
+                        <a href="{{ path('app_menu_show', {id: menu.id}) }}">
+                            Voir le détail
+                        </a>
+                    </p>
+                </article>
+            {% else %}
+                <p>Aucun menu disponible pour le moment.</p>
+            {% endfor %}
         </div>
     </main>
 {% endblock %}

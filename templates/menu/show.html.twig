@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ menu.nom }} — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <a href="{{ path('app_menu') }}">Retour aux menus</a>
+
+        <h1>{{ menu.nom }}</h1>
+        <p>{{ menu.description }}</p>
+
+        <p>
+            Minimum : {{ menu.minimumPersonnes }} personnes
+            — Prix :
+            {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} €
+            pour ce minimum
+        </p>
+
+        <section aria-labelledby="conditions-title">
+            <h2 id="conditions-title">Conditions de commande</h2>
+            <p>{{ menu.conditions }}</p>
+        </section>
+
+        <section aria-labelledby="plats-title">
+            <h2 id="plats-title">Composition du menu</h2>
+
+            {% for plat in menu.plats %}
+                <article class="menu-card">
+                    <h3>{{ plat.nom }}</h3>
+                    <p>{{ plat.description }}</p>
+
+                    <p>
+                        Allergènes :
+                        {% for allergene in plat.allergenes %}
+                            {{ allergene.libelle }}{% if not loop.last %}, {% endif %}
+                        {% else %}
+                            aucun allergène renseigné
+                        {% endfor %}
+                    </p>
+                </article>
+            {% else %}
+                <p>La composition sera prochainement renseignée.</p>
+            {% endfor %}
+        </section>
+    </main>
+{% endblock %}

@@ -18,4 +18,17 @@ final class MenuController extends AbstractController
             'menus' => $menus,
         ]);
     }
+    #[Route('/menus/{id}', name: 'app_menu_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+public function show(int $id, MenuRepository $menuRepository): Response
+{
+    $menu = $menuRepository->find($id);
+
+    if ($menu === null) {
+        throw $this->createNotFoundException('Ce menu existe pas.');
+    }
+
+    return $this->render('menu/show.html.twig', [
+        'menu' => $menu,
+    ]);
+}
 }
