@@ -8,13 +8,45 @@
 
         <h1>{{ menu.nom }}</h1>
         <p>{{ menu.description }}</p>
+        {% if menu.images is not empty %}
+            <section aria-labelledby="galerie-title">
+                <h2 id="galerie-title">En images</h2>
 
+                <div class="menu-gallery">
+                    {% for image in menu.images %}
+                        <img
+                            src="{{ image.chemin }}"
+                            alt="{{ image.textAlternatif }}"
+                            loading="lazy"
+                            <p
+                        >Illustration générée par IA pour ce menu de démonstration.</p>
+                        >
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
         <p>
             Minimum : {{ menu.minimumPersonnes }} personnes
             — Prix :
             {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} €
             pour ce minimum
         </p>
+
+        <p>
+            Prix par personne :
+            {{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} €
+        </p>
+
+        <p>
+            Thème : {{ menu.theme.libelle }}
+            — Régime : {{ menu.regime.libelle }}
+        </p>
+
+        {% if menu.stockCommandes > 0 %}
+            <p>{{ menu.stockCommandes }} commandes disponibles</p>
+        {% else %}
+            <p>Ce menu est actuellement indisponible à la commande.</p>
+        {% endif %}
 
         <section aria-labelledby="conditions-title">
             <h2 id="conditions-title">Conditions de commande</h2>

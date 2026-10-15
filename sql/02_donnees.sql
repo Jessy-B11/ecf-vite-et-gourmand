@@ -75,4 +75,17 @@ INSERT INTO menu_plat (menu_id, plat_id)
 VALUES
     (1, 2),
     (1, 3);
+
+INSERT INTO image_menu (
+    menu_id,
+    chemin,
+    texte_alternatif,
+    position
+)
+VALUES (
+    1,
+    '/images/menus/poulet-roti.png',
+    'Cuisse de poulet rôti accompagnée de riz blanc et de persil.',
+    1
+);
 COMMIT;

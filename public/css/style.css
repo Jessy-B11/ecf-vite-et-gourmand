@@ -77,3 +77,16 @@ h2 {
     outline: 2px solid var(--bordeaux);
     outline-offset: 4px;
 }
+.menu-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 16px;
+}
+
+.menu-gallery img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 16px;
+}
