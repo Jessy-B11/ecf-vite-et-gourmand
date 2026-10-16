@@ -16,28 +16,47 @@ class MenuRepository extends ServiceEntityRepository
         parent::__construct($registry, Menu::class);
     }
 
-//    /**
-//     * @return Menu[] Returns an array of Menu objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('m')
-//            ->andWhere('m.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('m.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * @return Menu[]
+     */
+    public function findByFiltres(
+        ?int $prixMaxCentimes = null,
+        ?int $themeId = null,
+        ?int $regimeId = null
+    ): array {
+        $queryBuilder = $this->createQueryBuilder('m');
 
-//    public function findOneBySomeField($value): ?Menu
-//    {
-//        return $this->createQueryBuilder('m')
-//            ->andWhere('m.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+        if ($prixMaxCentimes !== null) {
+            $queryBuilder
+                ->andWhere('m.prixMinimumCentimes <= :prixMax')
+                ->setParameter('prixMax', $prixMaxCentimes);
+        }
+
+        if ($themeId !== null) {
+            $queryBuilder
+                ->andWhere('m.theme = :themeId')
+                ->setParameter('themeId', $themeId);
+        }
+
+        if ($regimeId !== null) {
+            $queryBuilder
+                ->andWhere('m.regime = :regimeId')
+                ->setParameter('regimeId', $regimeId);
+        }
+        
+
+        return $queryBuilder
+            ->orderBy('m.prixMinimumCentimes', 'ASC')
+            ->addOrderBy('m.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Menu[]
+     */
+    public function findByPrixMaximum(int $prixMaxCentimes): array
+    {
+        return $this->findByFiltres($prixMaxCentimes);
+    }
 }
