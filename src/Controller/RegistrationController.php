@@ -4,11 +4,14 @@ namespace App\Controller;
 
 use App\Entity\Utilisateur;
 use App\Form\RegistrationFormType;
+use App\Service\EmailBienvenue;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -19,7 +22,9 @@ class RegistrationController extends AbstractController
         Request $request,
         UserPasswordHasherInterface $userPasswordHasher,
         Security $security,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        EmailBienvenue $emailBienvenue,
+        LoggerInterface $logger
     ): Response {
         $user = new Utilisateur();
 
@@ -39,6 +44,18 @@ class RegistrationController extends AbstractController
 
             $entityManager->persist($user);
             $entityManager->flush();
+
+            try {
+                $emailBienvenue->envoyer($user);
+            } catch (TransportExceptionInterface $exception) {
+                $logger->error(
+                    'Échec de l’envoi de l’email de bienvenue.',
+                    [
+                        'utilisateur_id' => $user->getId(),
+                        'exception' => $exception,
+                    ]
+                );
+            }
 
             $response = $security->login($user, 'form_login', 'main');
 
