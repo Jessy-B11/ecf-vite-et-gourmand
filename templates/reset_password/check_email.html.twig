@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Demande envoyée — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Consultez votre boîte mail</h1>
+
+        <p>
+            Si un compte correspond à cette adresse email,
+            vous recevrez un lien pour réinitialiser votre mot de passe.
+        </p>
+
+        <p>
+            Le lien est valable pendant
+            {{ resetToken.expirationMessageKey|trans(
+                resetToken.expirationMessageData,
+                'ResetPasswordBundle'
+            ) }}.
+        </p>
+
+        <p>
+            Si vous ne recevez pas de mail, vérifiez vos courriers
+            indésirables ou
+            <a href="{{ path('app_forgot_password_request') }}">
+                effectuez une nouvelle demande
+            </a>.
+        </p>
+
+        <p>
+            <a href="{{ path('app_login') }}">
+                Revenir à la connexion
+            </a>
+        </p>
+    </main>
+{% endblock %}

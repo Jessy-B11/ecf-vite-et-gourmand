@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mot de passe oublié — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Mot de passe oublié</h1>
+
+        {% for flash_error in app.flashes('reset_password_error') %}
+            <p class="form-error" role="alert">
+                Ce lien est invalide ou a expiré. Veuillez demander un nouveau lien.
+            </p>
+        {% endfor %}
+
+        <p>
+            Saisissez l’adresse email associée à votre compte
+            pour demander un lien de réinitialisation.
+        </p>
+
+        {{ form_start(requestForm, {
+            attr: {class: 'login-form'}
+        }) }}
+        {{ form_errors(requestForm) }}
+
+        {{ form_row(requestForm.email, {
+                label: 'Adresse email',
+                attr: {autocomplete: 'email'}
+            }) }}
+
+        <button type="submit">
+            Demander un lien de réinitialisation
+        </button>
+        {{ form_end(requestForm) }}
+
+        <p>
+            <a href="{{ path('app_login') }}">
+                Revenir à la connexion
+            </a>
+        </p>
+    </main>
+{% endblock %}

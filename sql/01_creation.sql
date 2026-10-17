@@ -207,3 +207,12 @@ CREATE TABLE creneau_horaire (
 
     CHECK (heure_fermeture > heure_ouverture)
 );
+CREATE TABLE reset_password_request (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES utilisateur(id),
+    selector VARCHAR(20) NOT NULL,
+    hashed_token VARCHAR(100) NOT NULL,
+    requested_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+    expires_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
+);
+COMMIT;

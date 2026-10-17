@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau mot de passe — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Choisir un nouveau mot de passe</h1>
+
+        {% if resetForm.vars.submitted and not resetForm.vars.valid %}
+            <p class="form-error" role="alert">
+                Votre mot de passe n’a pas été modifié.
+                Veuillez corriger les erreurs ci-dessous.
+            </p>
+        {% endif %}
+
+        {{ form_start(resetForm, {
+            attr: {class: 'login-form'}
+        }) }}
+        {{ form_errors(resetForm) }}
+
+        {{ form_row(resetForm.plainPassword.first, {
+                label: 'Nouveau mot de passe'
+            }) }}
+
+        {{ form_row(resetForm.plainPassword.second, {
+                label: 'Confirmer le nouveau mot de passe'
+            }) }}
+
+        <button type="submit">
+            Modifier mon mot de passe
+        </button>
+        {{ form_end(resetForm) }}
+    </main>
+{% endblock %}
