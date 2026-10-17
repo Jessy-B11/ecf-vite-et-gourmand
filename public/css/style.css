@@ -127,3 +127,42 @@ h2 {
     outline: 2px solid var(--bordeaux);
     outline-offset: 3px;
 }
+.registration-form {
+    display: grid;
+    gap: 20px;
+    max-width: 540px;
+}
+
+.registration-form label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.registration-form input:not([type="checkbox"]),
+.registration-form button {
+    width: 100%;
+    padding: 12px;
+    font: inherit;
+    border-radius: 8px;
+}
+
+.registration-form input:not([type="checkbox"]) {
+    border: 1px solid #62615b;
+}
+
+.registration-form button {
+    border: none;
+    background-color: var(--bordeaux);
+    color: var(--blanc);
+    cursor: pointer;
+}
+
+.registration-form ul {
+    color: var(--bordeaux);
+}
+
+.registration-form input:focus-visible,
+.registration-form button:focus-visible {
+    outline: 2px solid var(--bordeaux);
+    outline-offset: 3px;
+}

@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un compte — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Créer un compte</h1>
+        {% if registrationForm.vars.submitted and not registrationForm.vars.valid %}
+            <p class="form-error" role="alert">
+                Votre compte n’a pas été créé.
+                Corrigez les erreurs indiquées ci-dessous, puis réessayez.
+            </p>
+        {% endif %}
+
+        {{ form_start(registrationForm, {
+            attr: {class: 'registration-form'}
+        }) }}
+        {{ form_errors(registrationForm) }}
+
+        {{ form_row(registrationForm.nom) }}
+        {{ form_row(registrationForm.prenom) }}
+        {{ form_row(registrationForm.email) }}
+        {{ form_row(registrationForm.telephone) }}
+        {{ form_row(registrationForm.adresse) }}
+        {{ form_row(registrationForm.codePostal) }}
+        {{ form_row(registrationForm.ville) }}
+        {{ form_row(registrationForm.plainPassword) }}
+        {{ form_row(registrationForm.agreeTerms) }}
+
+        <button type="submit">Créer mon compte</button>
+        {{ form_end(registrationForm) }}
+
+        <p>
+            Déjà un compte ?
+            <a href="{{ path('app_login') }}">Se connecter</a>
+        </p>
+    </main>
+{% endblock %}
