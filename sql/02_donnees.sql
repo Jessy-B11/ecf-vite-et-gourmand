@@ -88,4 +88,27 @@ VALUES (
     'Cuisse de poulet rôti accompagnée de riz blanc et de persil.',
     1
 );
+INSERT INTO menu (
+    nom,
+    description,
+    minimum_personnes,
+    prix_minimum_centimes,
+    conditions,
+    delai_minimum_jours,
+    stock_commandes,
+    theme_id,
+    regime_id
+)
+VALUES (
+    'Menu de Noël vegan',
+    'Un menu festif de démonstration entièrement végétal.',
+    6,
+    18000,
+    'Commander au moins 5 jours calendaires avant la prestation.',
+    5,
+    3,
+    1,
+    3
+)
+RETURNING id, nom;
 COMMIT;

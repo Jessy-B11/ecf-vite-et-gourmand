@@ -74,7 +74,9 @@
                     value="{{ nombre_personnes }}"
                 >
                 <button type="submit">Filtrer</button>
-                <a href="{{ path('app_menu') }}">Réinitialiser</a>
+                <a id="reset-filters" href="{{ path('app_menu') }}">
+                    Réinitialiser
+                </a>
             </form>
             <p id="filter-status" role="status" aria-live="polite"></p>
 

@@ -69,3 +69,22 @@ if (form && results && status) {
         }
     });
 }
+const resetLink = document.querySelector("#reset-filters");
+
+if (form && results && status && resetLink) {
+    resetLink.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        const button = form.querySelector('button[type="submit"]');
+
+        if (button && button.disabled) {
+            return;
+        }
+
+        form.querySelectorAll("input[name], select[name]").forEach((field) => {
+            field.value = "";
+        });
+
+        form.requestSubmit();
+    });
+}
