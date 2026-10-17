@@ -96,3 +96,34 @@ h2 {
     background-color: #f5e8ea;
     border-left: 4px solid #7b2d3e;
 }
+.login-form {
+    display: grid;
+    gap: 12px;
+    max-width: 440px;
+}
+
+.login-form input,
+.login-form button {
+    width: 100%;
+    padding: 12px;
+    font: inherit;
+}
+
+.login-form input {
+    border: 1px solid #62615b;
+    border-radius: 8px;
+}
+
+.login-form button {
+    border: none;
+    border-radius: 8px;
+    background-color: var(--bordeaux);
+    color: var(--blanc);
+    cursor: pointer;
+}
+
+.login-form input:focus-visible,
+.login-form button:focus-visible {
+    outline: 2px solid var(--bordeaux);
+    outline-offset: 3px;
+}
