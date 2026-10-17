@@ -5,7 +5,25 @@
 {% block body %}
     <main class="container">
         <h1>Nos menus</h1>
+        {% if erreur_filtres %}
+            <p class="form-error" role="alert">
+                {{ erreur_filtres }}
+            </p>
+        {% endif %}
         <form method="get" action="{{ path('app_menu') }}">
+            <label for="prix-min">
+                Prix minimum du menu pour son minimum de personnes (€)
+            </label>
+
+            <input
+                type="number"
+                id="prix-min"
+                name="prix_min"
+                min="0"
+                step="0.01"
+                placeholder="Exemple : 100"
+                value="{{ prix_min }}"
+            >
             <label for="prix-max">
                 Prix maximum du menu pour son minimum de personnes (€)
             </label>
@@ -47,6 +65,18 @@
                     </option>
                 {% endfor %}
             </select>
+            <label for="nombre-personnes">Nombre de convives prévu</label>
+
+            <input
+                type="number"
+                id="nombre-personnes"
+                name="nombre_personnes"
+                min="1"
+                max="999999"
+                step="1"
+                placeholder="Exemple : 6"
+                value="{{ nombre_personnes }}"
+            >
             <button type="submit">Filtrer</button>
             <a href="{{ path('app_menu') }}">Réinitialiser</a>
         </form>
@@ -89,7 +119,9 @@
                     </p>
                 </article>
             {% else %}
-                <p>Aucun menu disponible pour le moment.</p>
+                {% if not erreur_filtres %}
+                    <p>Aucun menu disponible pour le moment.</p>
+                {% endif %}
             {% endfor %}
         </div>
     </main>

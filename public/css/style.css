@@ -90,3 +90,9 @@ h2 {
     object-fit: cover;
     border-radius: 16px;
 }
+.form-error {
+    padding: 16px;
+    color: #7b2d3e;
+    background-color: #f5e8ea;
+    border-left: 4px solid #7b2d3e;
+}

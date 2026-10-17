@@ -22,7 +22,9 @@ class MenuRepository extends ServiceEntityRepository
     public function findByFiltres(
         ?int $prixMaxCentimes = null,
         ?int $themeId = null,
-        ?int $regimeId = null
+        ?int $regimeId = null,
+        ?int $prixMinCentimes = null,
+        ?int $nombrePersonnes = null
     ): array {
         $queryBuilder = $this->createQueryBuilder('m');
 
@@ -30,6 +32,11 @@ class MenuRepository extends ServiceEntityRepository
             $queryBuilder
                 ->andWhere('m.prixMinimumCentimes <= :prixMax')
                 ->setParameter('prixMax', $prixMaxCentimes);
+        }
+        if ($prixMinCentimes !== null) {
+            $queryBuilder
+                ->andWhere('m.prixMinimumCentimes >= :prixMin')
+                ->setParameter('prixMin', $prixMinCentimes);
         }
 
         if ($themeId !== null) {
@@ -42,6 +49,12 @@ class MenuRepository extends ServiceEntityRepository
             $queryBuilder
                 ->andWhere('m.regime = :regimeId')
                 ->setParameter('regimeId', $regimeId);
+        }
+
+                if ($nombrePersonnes !== null) {
+            $queryBuilder
+                ->andWhere('m.minimumPersonnes <= :nombrePersonnes')
+                ->setParameter('nombrePersonnes', $nombrePersonnes);
         }
         
 
