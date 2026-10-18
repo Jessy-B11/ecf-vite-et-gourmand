@@ -74,5 +74,18 @@
                 <p>La composition sera prochainement renseignée.</p>
             {% endfor %}
         </section>
+        {% for message in app.flashes('warning') %}
+            <p role="alert">{{ message }}</p>
+        {% endfor %}
+
+        {% if menu.stockCommandes > 0 %}
+            <p>
+                <a href="{{ path('app_commande', {id: menu.id}) }}">
+                    Commander ce menu
+                </a>
+            </p>
+        {% else %}
+            <p>Ce menu est actuellement indisponible.</p>
+        {% endif %}
     </main>
 {% endblock %}
