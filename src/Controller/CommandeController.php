@@ -6,7 +6,9 @@ use App\Entity\Commande;
 use App\Entity\Utilisateur;
 use App\Form\CommandeType;
 use App\Repository\MenuRepository;
+use App\Service\CalculPrixCommande;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -17,12 +19,14 @@ final class CommandeController extends AbstractController
         '/menus/{id}/commander',
         name: 'app_commande',
         requirements: ['id' => '\d+'],
-        methods: ['GET']
+        methods: ['GET', 'POST']
     )]
     #[IsGranted('ROLE_CLIENT')]
     public function index(
         int $id,
-        MenuRepository $menuRepository
+        Request $request,
+        MenuRepository $menuRepository,
+        CalculPrixCommande $calculPrixCommande
     ): Response {
         $utilisateur = $this->getUser();
 
@@ -80,10 +84,36 @@ final class CommandeController extends AbstractController
             'date_minimum' => $dateMinimum,
         ]);
 
+        $form->handleRequest($request);
+
+        $recapitulatif = null;
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $nombrePersonnes = $commande->getNombrePersonnes();
+
+            $montantMenu = $calculPrixCommande->calculerMontantMenu(
+                $menu,
+                $nombrePersonnes
+            );
+
+            $remise = $calculPrixCommande->calculerRemise(
+                $menu,
+                $nombrePersonnes
+            );
+
+            $recapitulatif = [
+                'nombre_personnes' => $nombrePersonnes,
+                'montant_menu' => $montantMenu,
+                'remise' => $remise,
+                'montant_apres_remise' => $montantMenu - $remise,
+            ];
+        }
+
         return $this->render('commande/index.html.twig', [
             'commandeForm' => $form->createView(),
             'menu' => $menu,
             'client' => $utilisateur,
+            'recapitulatif' => $recapitulatif,
         ]);
     }
 }
