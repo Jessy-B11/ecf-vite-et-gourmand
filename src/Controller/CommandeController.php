@@ -5,16 +5,27 @@ namespace App\Controller;
 use App\Entity\Commande;
 use App\Entity\Utilisateur;
 use App\Form\CommandeType;
+use App\Form\ConfirmationAdresseType;
 use App\Repository\MenuRepository;
-use App\Service\CalculPrixCommande;
+use App\Service\GeocodageAdresse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\CalculFraisLivraison;
+use App\Service\CalculPrixCommande;
+use App\Service\ItineraireLivraison;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 final class CommandeController extends AbstractController
 {
+        public function __construct(
+        #[Autowire(env: 'LIVRAISON_COMMUNE_GRATUITE')]
+        private string $communeGratuite
+    ) {
+    }
     #[Route(
         '/menus/{id}/commander',
         name: 'app_commande',
@@ -26,7 +37,7 @@ final class CommandeController extends AbstractController
         int $id,
         Request $request,
         MenuRepository $menuRepository,
-        CalculPrixCommande $calculPrixCommande
+        GeocodageAdresse $geocodageAdresse
     ): Response {
         $utilisateur = $this->getUser();
 
@@ -86,33 +97,240 @@ final class CommandeController extends AbstractController
 
         $form->handleRequest($request);
 
-        $recapitulatif = null;
-
         if ($form->isSubmitted() && $form->isValid()) {
-            $nombrePersonnes = $commande->getNombrePersonnes();
-
-            $montantMenu = $calculPrixCommande->calculerMontantMenu(
-                $menu,
-                $nombrePersonnes
+            $adresseComplete = sprintf(
+                '%s %s %s',
+                $commande->getAdresseLivraison(),
+                $commande->getCodePostalLivraison(),
+                $commande->getVilleLivraison()
             );
 
-            $remise = $calculPrixCommande->calculerRemise(
-                $menu,
-                $nombrePersonnes
-            );
+            try {
+                $adressesProposees = $geocodageAdresse->rechercher(
+                    $adresseComplete
+                );
 
-            $recapitulatif = [
-                'nombre_personnes' => $nombrePersonnes,
-                'montant_menu' => $montantMenu,
-                'remise' => $remise,
-                'montant_apres_remise' => $montantMenu - $remise,
-            ];
+                if ($adressesProposees === []) {
+                    $form->get('adresseLivraison')->addError(
+                        new FormError(
+                            'Aucune adresse précise trouvée. Vérifiez le numéro, la rue, le code postal et la ville.'
+                        )
+                    );
+                } else {
+                    $jeton = bin2hex(random_bytes(16));
+
+                    $request->getSession()->set(
+                        'commande_brouillon',
+                        [
+                            'jeton' => $jeton,
+                            'utilisateur_id' => $utilisateur->getId(),
+                            'menu_id' => $menu->getId(),
+                            'nombre_personnes' => $commande->getNombrePersonnes(),
+                            'date_prestation' => $commande
+                                ->getDatePrestation()
+                                ->format('Y-m-d'),
+                            'heure_livraison' => $commande
+                                ->getHeureLivraison()
+                                ->format('H:i'),
+                            'telephone_contact' => $commande->getTelephoneContact(),
+                            'adresses' => $adressesProposees,
+                            'expire_a' => time() + 1800,
+                        ]
+                    );
+
+                    return $this->redirectToRoute(
+                        'app_commande_adresse',
+                        ['jeton' => $jeton],
+                        Response::HTTP_SEE_OTHER
+                    );
+                }
+            } catch (\RuntimeException $exception) {
+                $form->addError(
+                    new FormError(
+                        'La recherche d’adresse est momentanément indisponible. Réessayez dans quelques instants.'
+                    )
+                );
+            }
         }
 
         return $this->render('commande/index.html.twig', [
             'commandeForm' => $form->createView(),
             'menu' => $menu,
             'client' => $utilisateur,
+            'recapitulatif' => null,
+            'adresses_proposees' => [],
+        ]);
+    }
+
+        #[Route(
+        '/commande/adresse/{jeton}',
+        name: 'app_commande_adresse',
+        requirements: ['jeton' => '[a-f0-9]{32}'],
+        methods: ['GET', 'POST']
+    )]
+    #[IsGranted('ROLE_CLIENT')]
+    public function adresse(
+        string $jeton,
+        Request $request,
+        MenuRepository $menuRepository,
+        ItineraireLivraison $itineraireLivraison,
+        CalculFraisLivraison $calculFraisLivraison,
+        CalculPrixCommande $calculPrixCommande
+    ): Response {
+        $utilisateur = $this->getUser();
+
+        if (!$utilisateur instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $brouillon = $request->getSession()->get(
+            'commande_brouillon'
+        );
+
+        if (
+            !is_array($brouillon)
+            || $brouillon['utilisateur_id'] !== $utilisateur->getId()
+            || !hash_equals($brouillon['jeton'], $jeton)
+            || $brouillon['expire_a'] <= time()
+        ) {
+            throw $this->createNotFoundException(
+                'Ce brouillon est indisponible ou a expiré. Recommencez votre commande depuis le menu.'
+            );
+        }
+
+        $menu = $menuRepository->find($brouillon['menu_id']);
+
+        if ($menu === null) {
+            throw $this->createNotFoundException(
+                'Ce menu n’existe plus.'
+            );
+        }
+
+        $form = $this->createForm(
+            ConfirmationAdresseType::class,
+            null,
+            ['adresses' => $brouillon['adresses']]
+        );
+
+        $form->handleRequest($request);
+
+        $recapitulatif = null;
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $dateMinimum = new \DateTimeImmutable(
+                'today',
+                new \DateTimeZone('Europe/Paris')
+            );
+
+            $dateMinimum = $dateMinimum->modify(
+                sprintf('+%d days', $menu->getDelaiMinimumJours())
+            );
+
+            if ($menu->getStockCommandes() <= 0) {
+                $form->addError(
+                    new FormError('Ce menu est désormais indisponible.')
+                );
+            }
+
+            if (
+                $brouillon['nombre_personnes']
+                < $menu->getMinimumPersonnes()
+            ) {
+                $form->addError(
+                    new FormError(
+                        'Le minimum du menu a changé. Recommencez la saisie.'
+                    )
+                );
+            }
+
+            if (
+                $brouillon['date_prestation']
+                < $dateMinimum->format('Y-m-d')
+            ) {
+                $form->addError(
+                    new FormError(
+                        'La date ne respecte plus le délai du menu. Recommencez la saisie.'
+                    )
+                );
+            }
+
+            if ($form->isValid()) {
+                $index = $form->get('adresse')->getData();
+
+                $adresse = $brouillon['adresses'][$index];
+                $proprietes = $adresse['properties'];
+                $coordonnees = $adresse['geometry']['coordinates'] ?? null;
+                $codeCommune = $proprietes['citycode'] ?? null;
+
+                try {
+                    if (
+                        !is_string($codeCommune)
+                        || $codeCommune === ''
+                        || !is_array($coordonnees)
+                        || count($coordonnees) !== 2
+                        || !is_numeric($coordonnees[0])
+                        || !is_numeric($coordonnees[1])
+                    ) {
+                        throw new \RuntimeException(
+                            'Les données de cette adresse sont incomplètes.'
+                        );
+                    }
+
+                    $dansBordeaux = $codeCommune === $this->communeGratuite;
+                    $distanceMetres = null;
+
+                    if (!$dansBordeaux) {
+                        $distanceMetres = $itineraireLivraison
+                            ->calculerDistance(
+                                (float) $coordonnees[0],
+                                (float) $coordonnees[1]
+                            );
+                    }
+
+                    $fraisLivraison = $calculFraisLivraison->calculer(
+                        $dansBordeaux,
+                        $distanceMetres ?? 0
+                    );
+
+                    $nombrePersonnes = $brouillon['nombre_personnes'];
+
+                    $montantMenu = $calculPrixCommande
+                        ->calculerMontantMenu($menu, $nombrePersonnes);
+
+                    $remise = $calculPrixCommande
+                        ->calculerRemise($menu, $nombrePersonnes);
+
+                    $total = $calculPrixCommande->calculerTotal(
+                        $menu,
+                        $nombrePersonnes,
+                        $fraisLivraison
+                    );
+
+                    $recapitulatif = [
+                        'adresse' => $proprietes['label'],
+                        'nombre_personnes' => $nombrePersonnes,
+                        'date_prestation' => $brouillon['date_prestation'],
+                        'heure_livraison' => $brouillon['heure_livraison'],
+                        'dans_bordeaux' => $dansBordeaux,
+                        'distance_metres' => $distanceMetres,
+                        'montant_menu' => $montantMenu,
+                        'remise' => $remise,
+                        'frais_livraison' => $fraisLivraison,
+                        'total' => $total,
+                    ];
+                } catch (\RuntimeException | \InvalidArgumentException $exception) {
+                    $form->addError(
+                        new FormError(
+                            'Impossible de calculer la livraison pour cette adresse. Vérifiez votre saisie ou réessayez plus tard.'
+                        )
+                    );
+                }
+            }
+        }
+
+        return $this->render('commande/adresse.html.twig', [
+            'confirmationForm' => $form->createView(),
+            'menu' => $menu,
             'recapitulatif' => $recapitulatif,
         ]);
     }

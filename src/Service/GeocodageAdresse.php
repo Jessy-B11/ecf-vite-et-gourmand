@@ -56,6 +56,34 @@ final class GeocodageAdresse
             );
         }
 
-        return $propositions;
+        $adressesPrecises = [];
+
+        foreach ($propositions as $proposition) {
+            if (!is_array($proposition)) {
+                continue;
+            }
+
+            $proprietes = $proposition['properties'] ?? [];
+            $geometrie = $proposition['geometry'] ?? [];
+
+            if (!is_array($proprietes) || !is_array($geometrie)) {
+                continue;
+            }
+
+            $numero = $proprietes['housenumber'] ?? null;
+
+            if (
+                ($proprietes['type'] ?? null) !== 'housenumber'
+                || !is_string($numero)
+                || trim($numero) === ''
+                || ($geometrie['type'] ?? null) !== 'Point'
+            ) {
+                continue;
+            }
+
+            $adressesPrecises[] = $proposition;
+        }
+
+        return $adressesPrecises;
     }
 }

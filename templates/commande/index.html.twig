@@ -46,6 +46,24 @@
             Calculer le prix du menu
         </button>
         {{ form_end(commandeForm) }}
+        {% if adresses_proposees is not empty %}
+            <section aria-labelledby="adresses-trouvees">
+                <h2 id="adresses-trouvees">
+                    Adresses trouvées
+                </h2>
+
+                <ul>
+                    {% for adresse in adresses_proposees %}
+                        <li>{{ adresse.properties.label }}</li>
+                    {% endfor %}
+                </ul>
+
+                <p>
+                    Vérifiez que l’adresse proposée correspond
+                    bien au lieu de livraison souhaité.
+                </p>
+            </section>
+        {% endif %}
 
         {% if recapitulatif is not null %}
             <section aria-labelledby="recapitulatif-menu">
