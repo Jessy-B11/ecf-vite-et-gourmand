@@ -10,8 +10,13 @@ final class ItineraireLivraison
 {
     public function __construct(
         private HttpClientInterface $httpClient,
+
+        #[Autowire(env: 'ORS_API_KEY')]
+        private string $cleApi,
+
         #[Autowire(env: 'float:LIVRAISON_DEPART_LONGITUDE')]
         private float $longitudeDepart,
+
         #[Autowire(env: 'float:LIVRAISON_DEPART_LATITUDE')]
         private float $latitudeDepart
     ) {
@@ -31,25 +36,38 @@ final class ItineraireLivraison
             $latitudeArrivee
         );
 
+        $cleApi = trim($this->cleApi);
+
+        if ($cleApi === '') {
+            throw new \RuntimeException(
+                'La clé OpenRouteService est manquante.'
+            );
+        }
+
         try {
             $reponse = $this->httpClient->request(
-                'GET',
-                'https://data.geopf.fr/navigation/itineraire',
+                'POST',
+                'https://api.heigit.org/openrouteservice/v2/directions/driving-car/json',
                 [
-                    'query' => [
-                        'resource' => 'bdtopo-osrm',
-                        'start' => $this->longitudeDepart
-                            . ',' . $this->latitudeDepart,
-                        'end' => $longitudeArrivee
-                            . ',' . $latitudeArrivee,
-                        'profile' => 'car',
-                        'optimization' => 'fastest',
-                        'distanceUnit' => 'meter',
-                        'getSteps' => 'false',
-                        'getBbox' => 'false',
-                    ],
                     'headers' => [
+                        'Authorization' => $cleApi,
                         'Accept' => 'application/json',
+                    ],
+                    'json' => [
+                        'coordinates' => [
+                            [
+                                $this->longitudeDepart,
+                                $this->latitudeDepart,
+                            ],
+                            [
+                                $longitudeArrivee,
+                                $latitudeArrivee,
+                            ],
+                        ],
+                        'preference' => 'fastest',
+                        'units' => 'm',
+                        'geometry' => false,
+                        'instructions' => false,
                     ],
                     'timeout' => 5,
                     'max_duration' => 15,
@@ -65,7 +83,7 @@ final class ItineraireLivraison
             );
         }
 
-        $distance = $donnees['distance'] ?? null;
+        $distance = $donnees['routes'][0]['summary']['distance'] ?? null;
 
         if (
             (!is_int($distance) && !is_float($distance))
@@ -74,7 +92,7 @@ final class ItineraireLivraison
             || $distance >= PHP_INT_MAX
         ) {
             throw new \RuntimeException(
-                'Le service d’itinéraire a renvoyé une distance invalide.'
+                'Le service n’a pas renvoyé de distance exploitable.'
             );
         }
 

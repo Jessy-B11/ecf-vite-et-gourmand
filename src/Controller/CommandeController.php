@@ -18,6 +18,8 @@ use App\Service\CalculFraisLivraison;
 use App\Service\CalculPrixCommande;
 use App\Service\ItineraireLivraison;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Repository\CommandeRepository;
+use App\Service\EnregistrementCommande;
 
 final class CommandeController extends AbstractController
 {
@@ -216,6 +218,10 @@ final class CommandeController extends AbstractController
 
         $recapitulatif = null;
 
+        if ($form->isSubmitted()) {
+            $request->getSession()->remove('commande_confirmation');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             $dateMinimum = new \DateTimeImmutable(
                 'today',
@@ -318,6 +324,24 @@ final class CommandeController extends AbstractController
                         'frais_livraison' => $fraisLivraison,
                         'total' => $total,
                     ];
+                                        $request->getSession()->set(
+                        'commande_confirmation',
+                        [
+                            'jeton_confirmation' => bin2hex(random_bytes(16)),
+                            'jeton_brouillon' => $jeton,
+                            'utilisateur_id' => $utilisateur->getId(),
+                            'menu_id' => $menu->getId(),
+                            'nombre_personnes' => $nombrePersonnes,
+                            'date_prestation' => $brouillon['date_prestation'],
+                            'heure_livraison' => $brouillon['heure_livraison'],
+                            'telephone_contact' => $brouillon['telephone_contact'],
+                            'adresse_livraison' => $proprietes['name'] ?? '',
+                            'code_postal_livraison' => $proprietes['postcode'] ?? '',
+                            'ville_livraison' => $proprietes['city'] ?? '',
+                            'recapitulatif' => $recapitulatif,
+                            'expire_a' => $brouillon['expire_a'],
+                        ]
+                    );
                 } catch (\RuntimeException | \InvalidArgumentException $exception) {
                     $form->addError(
                         new FormError(
@@ -328,10 +352,215 @@ final class CommandeController extends AbstractController
             }
         }
 
-        return $this->render('commande/adresse.html.twig', [
-            'confirmationForm' => $form->createView(),
+            return $this->render('commande/adresse.html.twig', [
+                'confirmationForm' => $form->createView(),
+                'menu' => $menu,
+                'recapitulatif' => $recapitulatif,
+                'jeton_confirmation' => $request->getSession()
+                    ->get('commande_confirmation')['jeton_confirmation'] ?? null,
+        ]);
+    }
+            #[Route(
+        '/commande/confirmer/{jeton}',
+        name: 'app_commande_confirmation',
+        requirements: ['jeton' => '[a-f0-9]{32}'],
+        methods: ['GET', 'POST']
+    )]
+    #[IsGranted('ROLE_CLIENT')]
+    public function confirmation(
+        string $jeton,
+        Request $request,
+        MenuRepository $menuRepository,
+        EnregistrementCommande $enregistrementCommande
+    ): Response {
+        $utilisateur = $this->getUser();
+
+        if (!$utilisateur instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $session = $request->getSession();
+        $confirmation = $session->get('commande_confirmation');
+        $brouillon = $session->get('commande_brouillon');
+
+        if (
+            !is_array($confirmation)
+            || !is_array($brouillon)
+            || $confirmation['utilisateur_id'] !== $utilisateur->getId()
+            || $brouillon['utilisateur_id'] !== $utilisateur->getId()
+            || !hash_equals(
+                $confirmation['jeton_confirmation'],
+                $jeton
+            )
+            || !hash_equals(
+                $brouillon['jeton'],
+                $confirmation['jeton_brouillon']
+            )
+            || $confirmation['menu_id'] !== $brouillon['menu_id']
+        ) {
+            throw $this->createNotFoundException(
+                'Cette confirmation est indisponible. Recommencez depuis le menu.'
+            );
+        }
+
+        // Une validation déjà réussie affiche son résultat.
+        if (isset($confirmation['commande_id'])) {
+            return $this->redirectToRoute(
+                'app_commande_succes',
+                ['id' => $confirmation['commande_id']],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        if (
+            $confirmation['expire_a'] <= time()
+            || $brouillon['expire_a'] <= time()
+        ) {
+            throw $this->createNotFoundException(
+                'Cette confirmation a expiré. Recommencez depuis le menu.'
+            );
+        }
+
+        $menu = $menuRepository->find($confirmation['menu_id']);
+
+        if ($menu === null) {
+            throw $this->createNotFoundException(
+                'Ce menu n’existe plus.'
+            );
+        }
+
+        if ($request->isMethod('POST')) {
+            $jetonCsrf = $request->request->getString('_token');
+
+            if (!$this->isCsrfTokenValid(
+                'confirmer_commande_' . $jeton,
+                $jetonCsrf
+            )) {
+                throw $this->createAccessDeniedException(
+                    'La validation du formulaire est invalide. Rechargez la page.'
+                );
+            }
+
+            // Ces données viennent de la session du serveur,
+            // pas de champs de prix envoyés par le navigateur.
+            $recapitulatif = $confirmation['recapitulatif'];
+            $fuseau = new \DateTimeZone('Europe/Paris');
+
+            $commande = new Commande();
+            $commande->setUtilisateur($utilisateur);
+            $commande->setMenu($menu);
+            $commande->setJetonValidation(
+                $confirmation['jeton_brouillon']
+            );
+            $commande->setNombrePersonnes(
+                $confirmation['nombre_personnes']
+            );
+            $commande->setDatePrestation(
+                new \DateTimeImmutable(
+                    $confirmation['date_prestation'],
+                    $fuseau
+                )
+            );
+            $commande->setHeureLivraison(
+                new \DateTimeImmutable(
+                    '1970-01-01 ' . $confirmation['heure_livraison'],
+                    $fuseau
+                )
+            );
+            $commande->setAdresseLivraison(
+                $confirmation['adresse_livraison']
+            );
+            $commande->setCodePostalLivraison(
+                $confirmation['code_postal_livraison']
+            );
+            $commande->setVilleLivraison(
+                $confirmation['ville_livraison']
+            );
+            $commande->setTelephoneContact(
+                $confirmation['telephone_contact']
+            );
+            $commande->setMontantMenuCentimes(
+                $recapitulatif['montant_menu']
+            );
+            $commande->setMontantRemiseCentimes(
+                $recapitulatif['remise']
+            );
+            $commande->setFraisLivraisonCentimes(
+                $recapitulatif['frais_livraison']
+            );
+            $commande->setMontantTotalCentimes(
+                $recapitulatif['total']
+            );
+
+            try {
+                $commandeEnregistree = $enregistrementCommande
+                    ->enregistrer($commande);
+            } catch (\DomainException | \InvalidArgumentException $exception) {
+                $session->remove('commande_confirmation');
+
+                $this->addFlash(
+                    'warning',
+                    $exception->getMessage()
+                );
+
+                return $this->redirectToRoute(
+                    'app_menu_show',
+                    ['id' => $menu->getId()],
+                    Response::HTTP_SEE_OTHER
+                );
+            }
+
+            $confirmation['commande_id'] = $commandeEnregistree->getId();
+
+            $session->set(
+                'commande_confirmation',
+                $confirmation
+            );
+
+            return $this->redirectToRoute(
+                'app_commande_succes',
+                ['id' => $commandeEnregistree->getId()],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        return $this->render('commande/confirmation.html.twig', [
             'menu' => $menu,
-            'recapitulatif' => $recapitulatif,
+            'confirmation' => $confirmation,
+            'recapitulatif' => $confirmation['recapitulatif'],
+        ]);
+    }
+        #[Route(
+        '/commande/succes/{id}',
+        name: 'app_commande_succes',
+        requirements: ['id' => '\d+'],
+        methods: ['GET']
+    )]
+    #[IsGranted('ROLE_CLIENT')]
+    public function succes(
+        int $id,
+        CommandeRepository $commandeRepository
+    ): Response {
+        $utilisateur = $this->getUser();
+
+        if (!$utilisateur instanceof Utilisateur) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if (
+            $commande === null
+            || $commande->getUtilisateur()?->getId()
+                !== $utilisateur->getId()
+        ) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        return $this->render('commande/succes.html.twig', [
+            'commande' => $commande,
         ]);
     }
 }

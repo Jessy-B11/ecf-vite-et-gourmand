@@ -52,6 +52,15 @@
                     {{ (recapitulatif.remise / 100)
                         |number_format(2, ',', ' ') }} €
                 </p>
+                <p>
+                    <a
+                        href="{{ path('app_commande_confirmation', {
+            jeton: jeton_confirmation
+        }) }}"
+                    >
+                        Continuer vers la confirmation
+                    </a>
+                </p>
 
                 {% if recapitulatif.dans_bordeaux %}
                     <p>Livraison dans Bordeaux : gratuite.</p>

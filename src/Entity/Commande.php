@@ -94,6 +94,26 @@ class Commande
         $this->dateCreation = new \DateTimeImmutable();
     }
 
+        #[ORM\Column(
+        name: 'jeton_validation',
+        length: 32,
+        unique: true,
+        nullable: true
+    )]
+    private ?string $jetonValidation = null;
+
+    public function getJetonValidation(): ?string
+    {
+        return $this->jetonValidation;
+    }
+
+    public function setJetonValidation(string $jetonValidation): static
+    {
+        $this->jetonValidation = $jetonValidation;
+
+        return $this;
+    }
+
     public function getId(): ?int
     {
         return $this->id;

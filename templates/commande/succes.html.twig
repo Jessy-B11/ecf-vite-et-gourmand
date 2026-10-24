@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande enregistrée — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Votre commande est enregistrée</h1>
+
+        <p>
+            Référence : <strong>{{ commande.id }}</strong>
+        </p>
+
+        <p>
+            Votre commande est en attente de validation par l’équipe.
+        </p>
+
+        <p>
+            Prestation :
+            {{ commande.datePrestation|date('d/m/Y') }}
+            à {{ commande.heureLivraison|date('H:i') }}
+        </p>
+
+        <p>
+            Nombre de personnes : {{ commande.nombrePersonnes }}
+        </p>
+
+        <p>
+            Livraison :
+            {{ commande.adresseLivraison }},
+            {{ commande.codePostalLivraison }}
+            {{ commande.villeLivraison }}
+        </p>
+
+        <p>
+            <strong>
+                Total :
+                {{ (commande.montantTotalCentimes / 100)
+                    |number_format(2, ',', ' ') }} €
+            </strong>
+        </p>
+
+        <a href="{{ path('app_menu') }}">
+            Revenir aux menus
+        </a>
+    </main>
+{% endblock %}
