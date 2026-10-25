@@ -16,6 +16,13 @@
 
     <main class="container">
         <h1>Commande n°{{ commande.id }}</h1>
+        {% for type, messages in app.flashes() %}
+            {% for message in messages %}
+                <p role="{{ type == 'warning' ? 'alert' : 'status' }}">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        {% endfor %}
 
         <p>
             Statut :
@@ -97,6 +104,35 @@
                 {% endfor %}
             </ol>
         </section>
+        {% if commande.statut == 'en_attente' %}
+            <section aria-labelledby="annulation-commande">
+                <h2 id="annulation-commande">Annuler la commande</h2>
+
+                <p>
+                    Vous pouvez annuler cette commande tant que
+                    notre équipe ne l’a pas acceptée.
+                </p>
+
+                <form
+                    method="post"
+                    action="{{ path('app_mes_commandes_annuler', {
+                        id: commande.id
+                    }) }}"
+                >
+                    <input
+                        type="hidden"
+                        name="_token"
+                        value="{{ csrf_token(
+                            'annuler_commande_' ~ commande.id
+                        ) }}"
+                    >
+
+                    <button type="submit">
+                        Annuler ma commande
+                    </button>
+                </form>
+            </section>
+        {% endif %}
 
         <a href="{{ path('app_mes_commandes') }}">
             Revenir à mes commandes
