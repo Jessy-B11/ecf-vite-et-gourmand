@@ -20,6 +20,7 @@ use App\Service\ItineraireLivraison;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use App\Repository\CommandeRepository;
 use App\Service\EnregistrementCommande;
+use App\Service\EmailConfirmationCommande;
 
 final class CommandeController extends AbstractController
 {
@@ -367,11 +368,12 @@ final class CommandeController extends AbstractController
         methods: ['GET', 'POST']
     )]
     #[IsGranted('ROLE_CLIENT')]
-    public function confirmation(
+        public function confirmation(
         string $jeton,
         Request $request,
         MenuRepository $menuRepository,
-        EnregistrementCommande $enregistrementCommande
+        EnregistrementCommande $enregistrementCommande,
+        EmailConfirmationCommande $emailConfirmationCommande
     ): Response {
         $utilisateur = $this->getUser();
 
@@ -516,6 +518,11 @@ final class CommandeController extends AbstractController
                 'commande_confirmation',
                 $confirmation
             );
+                        if ($commandeEnregistree === $commande) {
+                $emailConfirmationCommande->envoyer(
+                    $commandeEnregistree
+                );
+            }
 
             return $this->redirectToRoute(
                 'app_commande_succes',
