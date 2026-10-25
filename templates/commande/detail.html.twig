@@ -105,6 +105,15 @@
             </ol>
         </section>
         {% if commande.statut == 'en_attente' %}
+            <p>
+                <a
+                    href="{{ path('app_mes_commandes_modifier', {
+            id: commande.id
+        }) }}"
+                >
+                    Modifier ma commande
+                </a>
+            </p>
             <section aria-labelledby="annulation-commande">
                 <h2 id="annulation-commande">Annuler la commande</h2>
 

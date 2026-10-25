@@ -1,0 +1,102 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérifier la nouvelle adresse — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Modifier la commande n°{{ commande.id }}</h1>
+
+        <h2>Confirmez votre adresse de livraison</h2>
+
+        {{ form_start(confirmationForm) }}
+        {{ form_errors(confirmationForm) }}
+        {{ form_row(confirmationForm.adresse) }}
+
+        <button type="submit">
+            Vérifier l’adresse et recalculer le total
+        </button>
+        {{ form_end(confirmationForm) }}
+
+        {% if recapitulatif is not null %}
+            <section aria-labelledby="nouveau-recapitulatif">
+                <h2 id="nouveau-recapitulatif">
+                    Récapitulatif des modifications
+                </h2>
+
+                <p>Adresse : {{ recapitulatif.adresse }}</p>
+
+                <p>
+                    Prestation :
+                    {{ recapitulatif.date_prestation|date('d/m/Y') }}
+                    à {{ recapitulatif.heure_livraison }}
+                </p>
+
+                <p>
+                    Nombre de personnes :
+                    {{ recapitulatif.nombre_personnes }}
+                </p>
+
+                <p>
+                    Menu avant remise :
+                    {{ (recapitulatif.montant_menu / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    Remise :
+                    {{ (recapitulatif.remise / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                {% if recapitulatif.distance_metres is not null %}
+                    <p>
+                        Distance routière aller :
+                        {{ (recapitulatif.distance_metres / 1000)
+                            |number_format(3, ',', ' ') }} km.
+                    </p>
+                {% endif %}
+
+                <p>
+                    {% if recapitulatif.adresse_identique %}
+                        Frais de livraison conservés :
+                    {% else %}
+                        Frais de livraison recalculés :
+                    {% endif %}
+
+                    {{ (recapitulatif.frais_livraison / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    <strong>
+                        Nouveau total :
+                        {{ (recapitulatif.total / 100)
+                            |number_format(2, ',', ' ') }} €
+                    </strong>
+                </p>
+
+                <p>Aucune modification n’est encore enregistrée.</p>
+                <p>
+                    <a
+                        href="{{ path(
+                        'app_modification_commande_confirmation',
+                        {jeton: jeton_confirmation}
+                    ) }}"
+                    >
+                        Continuer vers la confirmation
+                    </a>
+                </p>
+            </section>
+        {% endif %}
+
+        <p>
+            <a
+                href="{{ path('app_mes_commandes_modifier', {
+                id: commande.id
+            }) }}"
+            >
+                Recommencer la modification
+            </a>
+        </p>
+    </main>
+{% endblock %}
