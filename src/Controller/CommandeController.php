@@ -343,6 +343,10 @@ final class CommandeController extends AbstractController
                             'expire_a' => $brouillon['expire_a'],
                         ]
                     );
+                                } catch (\DomainException $exception) {
+                    $form->addError(
+                        new FormError($exception->getMessage())
+                    );
                 } catch (\RuntimeException | \InvalidArgumentException $exception) {
                     $form->addError(
                         new FormError(
@@ -373,7 +377,8 @@ final class CommandeController extends AbstractController
         Request $request,
         MenuRepository $menuRepository,
         EnregistrementCommande $enregistrementCommande,
-        EmailConfirmationCommande $emailConfirmationCommande
+        EmailConfirmationCommande $emailConfirmationCommande,
+        CalculFraisLivraison $calculFraisLivraison
     ): Response {
         $utilisateur = $this->getUser();
 
@@ -494,7 +499,12 @@ final class CommandeController extends AbstractController
                 $recapitulatif['total']
             );
 
-            try {
+                        try {
+                $calculFraisLivraison->verifierZone(
+                    $recapitulatif['dans_bordeaux'],
+                    $recapitulatif['distance_metres'] ?? 0
+                );
+
                 $commandeEnregistree = $enregistrementCommande
                     ->enregistrer($commande);
             } catch (\DomainException | \InvalidArgumentException $exception) {
