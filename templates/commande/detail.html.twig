@@ -1,0 +1,105 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande n°{{ commande.id }} — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% set statuts = {
+        'en_attente': 'En attente de validation',
+        'acceptee': 'Acceptée',
+        'en_preparation': 'En préparation',
+        'en_livraison': 'En livraison',
+        'livree': 'Livrée',
+        'attente_retour_materiel': 'En attente du retour du matériel',
+        'terminee': 'Terminée',
+        'annulee': 'Annulée'
+    } %}
+
+    <main class="container">
+        <h1>Commande n°{{ commande.id }}</h1>
+
+        <p>
+            Statut :
+            <strong>
+                {{ statuts[commande.statut]|default(commande.statut) }}
+            </strong>
+        </p>
+
+        <section aria-labelledby="details-prestation">
+            <h2 id="details-prestation">Votre prestation</h2>
+
+            <p>Menu : {{ commande.menu.nom }}</p>
+
+            <p>
+                Date :
+                {{ commande.datePrestation|date('d/m/Y') }}
+                à {{ commande.heureLivraison|date('H:i') }}
+            </p>
+
+            <p>
+                Nombre de personnes : {{ commande.nombrePersonnes }}
+            </p>
+
+            <p>
+                Livraison :
+                {{ commande.adresseLivraison }},
+                {{ commande.codePostalLivraison }}
+                {{ commande.villeLivraison }}
+            </p>
+
+            <p>
+                Téléphone de contact : {{ commande.telephoneContact }}
+            </p>
+        </section>
+
+        <section aria-labelledby="details-prix">
+            <h2 id="details-prix">Montants enregistrés</h2>
+
+            <p>
+                Menu avant remise :
+                {{ (commande.montantMenuCentimes / 100)
+                    |number_format(2, ',', ' ') }} €
+            </p>
+
+            <p>
+                Remise :
+                {{ (commande.montantRemiseCentimes / 100)
+                    |number_format(2, ',', ' ') }} €
+            </p>
+
+            <p>
+                Livraison :
+                {{ (commande.fraisLivraisonCentimes / 100)
+                    |number_format(2, ',', ' ') }} €
+            </p>
+
+            <p>
+                <strong>
+                    Total :
+                    {{ (commande.montantTotalCentimes / 100)
+                        |number_format(2, ',', ' ') }} €
+                </strong>
+            </p>
+        </section>
+
+        <section aria-labelledby="historique-commande">
+            <h2 id="historique-commande">Suivi de votre commande</h2>
+
+            <ol>
+                {% for etape in historique %}
+                    <li>
+                        {{ etape.dateChangement
+                            |date('d/m/Y à H:i', 'Europe/Paris') }}
+                        —
+                        {{ statuts[etape.statut]|default(etape.statut) }}
+                    </li>
+                {% else %}
+                    <li>Aucune étape disponible pour le moment.</li>
+                {% endfor %}
+            </ol>
+        </section>
+
+        <a href="{{ path('app_mes_commandes') }}">
+            Revenir à mes commandes
+        </a>
+    </main>
+{% endblock %}

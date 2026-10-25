@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes commandes — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Mes commandes</h1>
+
+        {% for commande in commandes %}
+            <article class="menu-card">
+                <h2>Commande n°{{ commande.id }}</h2>
+
+                <p>Menu : {{ commande.menu.nom }}</p>
+
+                <p>
+                    Commandée le :
+                    {{ commande.dateCreation
+                        |date('d/m/Y à H:i', 'Europe/Paris') }}
+                </p>
+
+                <p>
+                    Prestation :
+                    {{ commande.datePrestation|date('d/m/Y') }}
+                    à {{ commande.heureLivraison|date('H:i') }}
+                </p>
+
+                <p>
+                    Nombre de personnes :
+                    {{ commande.nombrePersonnes }}
+                </p>
+
+                <p>
+                    Statut :
+                    {{ commande.statut|replace({'_': ' '})|capitalize }}
+                </p>
+
+                <p>
+                    <strong>
+                        Total :
+                        {{ (commande.montantTotalCentimes / 100)
+                            |number_format(2, ',', ' ') }} €
+                    </strong>
+                </p>
+
+                <a
+                    href="{{ path('app_mes_commandes_show', {
+                        id: commande.id
+                    }) }}"
+                >
+                    Voir le récapitulatif
+                </a>
+            </article>
+        {% else %}
+            <p>Vous n’avez pas encore passé de commande.</p>
+
+            <a href="{{ path('app_menu') }}">
+                Découvrir nos menus
+            </a>
+        {% endfor %}
+    </main>
+{% endblock %}

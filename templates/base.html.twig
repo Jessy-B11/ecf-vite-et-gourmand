@@ -30,6 +30,11 @@
 
                 <a href="{{ path('app_menu') }}">Nos menus</a>
             </nav>
+            {% if is_granted('ROLE_CLIENT') %}
+                <a href="{{ path('app_mes_commandes') }}">
+                    Mes commandes
+                </a>
+            {% endif %}
         </header>
         {% block body %}{% endblock %}
     </body>
