@@ -1,0 +1,109 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Utilisateur;
+use App\Repository\CommandeRepository;
+use App\Service\AcceptationCommande;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[IsGranted('ROLE_EMPLOYE')]
+final class GestionCommandeController extends AbstractController
+{
+    #[Route(
+        '/gestion/commandes',
+        name: 'app_gestion_commandes',
+        methods: ['GET']
+    )]
+    public function index(
+        CommandeRepository $commandeRepository
+    ): Response {
+        $utilisateur = $this->getUser();
+
+        if (
+            !$utilisateur instanceof Utilisateur
+            || !$utilisateur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $this->render('gestion/commande/index.html.twig', [
+            'commandes' => $commandeRepository
+                ->findDernieresPourGestion(),
+        ]);
+    }
+
+    #[Route(
+        '/gestion/commandes/{id}/accepter',
+        name: 'app_gestion_commandes_accepter',
+        requirements: ['id' => '\d+'],
+        methods: ['POST']
+    )]
+    public function accepter(
+        int $id,
+        Request $request,
+        CommandeRepository $commandeRepository,
+        AcceptationCommande $acceptationCommande
+    ): Response {
+        $auteur = $this->getUser();
+
+        if (
+            !$auteur instanceof Utilisateur
+            || !$auteur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'accepter_commande_' . $id,
+            $request->request->getString('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Le formulaire est invalide. Rechargez la page.'
+            );
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        try {
+            $acceptee = $acceptationCommande->accepter(
+                $commande,
+                $auteur
+            );
+        } catch (\DomainException | \InvalidArgumentException $exception) {
+            $this->addFlash(
+                'warning',
+                $exception->getMessage()
+            );
+
+            return $this->redirectToRoute(
+                'app_gestion_commandes',
+                [],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        $this->addFlash(
+            'success',
+            $acceptee
+                ? 'La commande a bien été acceptée.'
+                : 'Cette commande est déjà acceptée.'
+        );
+
+        return $this->redirectToRoute(
+            'app_gestion_commandes',
+            [],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+}
