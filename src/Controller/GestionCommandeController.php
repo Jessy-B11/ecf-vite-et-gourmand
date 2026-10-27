@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Repository\HistoriqueCommandeRepository;
+use App\Service\SuiviCommande;
 
 #[IsGranted('ROLE_EMPLOYE')]
 final class GestionCommandeController extends AbstractController
@@ -143,6 +144,80 @@ final class GestionCommandeController extends AbstractController
         return $this->redirectToRoute(
             'app_gestion_commandes',
             [],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+        #[Route(
+        '/gestion/commandes/{id}/suivi/{statut}',
+        name: 'app_gestion_commandes_suivi',
+        requirements: [
+            'id' => '\d+',
+            'statut' => 'en_preparation|en_livraison|livree',
+        ],
+        methods: ['POST']
+    )]
+    public function suivi(
+        int $id,
+        string $statut,
+        Request $request,
+        CommandeRepository $commandeRepository,
+        SuiviCommande $suiviCommande
+    ): Response {
+        $auteur = $this->getUser();
+
+        if (
+            !$auteur instanceof Utilisateur
+            || !$auteur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'suivi_commande_' . $id . '_' . $statut,
+            $request->request->getString('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Le formulaire est invalide. Rechargez la page.'
+            );
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        try {
+            $modifiee = $suiviCommande->changerStatut(
+                $commande,
+                $auteur,
+                $statut
+            );
+        } catch (\DomainException | \InvalidArgumentException $exception) {
+            $this->addFlash(
+                'warning',
+                $exception->getMessage()
+            );
+
+            return $this->redirectToRoute(
+                'app_gestion_commandes_show',
+                ['id' => $id],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        $this->addFlash(
+            'success',
+            $modifiee
+                ? 'Le statut de la commande a bien été mis à jour.'
+                : 'La commande possède déjà ce statut.'
+        );
+
+        return $this->redirectToRoute(
+            'app_gestion_commandes_show',
+            ['id' => $id],
             Response::HTTP_SEE_OTHER
         );
     }

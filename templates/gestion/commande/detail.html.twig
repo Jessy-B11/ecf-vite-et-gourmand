@@ -18,6 +18,13 @@
 
     <main class="container">
         <h1>Commande n°{{ commande.id }}</h1>
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <p class="flash flash-{{ type }}" role="status">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        {% endfor %}
 
         <p>
             Statut :
@@ -127,6 +134,55 @@
 
                     <button type="submit">
                         Accepter la commande
+                    </button>
+                </form>
+            </section>
+        {% endif %}
+
+        {% set actionsSuivi = {
+    acceptee: {
+        statut: 'en_preparation',
+        libelle: 'Commencer la préparation'
+    },
+    en_preparation: {
+        statut: 'en_livraison',
+        libelle: 'Démarrer la livraison'
+    },
+    en_livraison: {
+        statut: 'livree',
+        libelle: 'Confirmer la livraison'
+    }
+} %}
+
+        {% if actionsSuivi[commande.statut] is defined %}
+            {% set actionSuivi = actionsSuivi[commande.statut] %}
+
+            <section aria-labelledby="suivi-commande">
+                <h2 id="suivi-commande">Faire avancer la commande</h2>
+
+                <form
+                    method="post"
+                    action="{{ path(
+                'app_gestion_commandes_suivi',
+                {
+                    id: commande.id,
+                    statut: actionSuivi.statut
+                }
+            ) }}"
+                >
+                    <input
+                        type="hidden"
+                        name="_token"
+                        value="{{ csrf_token(
+                    'suivi_commande_'
+                    ~ commande.id
+                    ~ '_'
+                    ~ actionSuivi.statut
+                ) }}"
+                    >
+
+                    <button type="submit">
+                        {{ actionSuivi.libelle }}
                     </button>
                 </form>
             </section>
