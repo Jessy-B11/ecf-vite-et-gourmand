@@ -154,6 +154,16 @@
     }
 } %}
 
+        {% if commande.statut == 'livree'
+    and not commande.materielPrete %}
+            {% set actionsSuivi = actionsSuivi|merge({
+        livree: {
+            statut: 'terminee',
+            libelle: 'Terminer la commande'
+        }
+    }) %}
+        {% endif %}
+
         {% if actionsSuivi[commande.statut] is defined %}
             {% set actionSuivi = actionsSuivi[commande.statut] %}
 

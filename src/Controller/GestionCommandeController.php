@@ -152,7 +152,7 @@ final class GestionCommandeController extends AbstractController
         name: 'app_gestion_commandes_suivi',
         requirements: [
             'id' => '\d+',
-            'statut' => 'en_preparation|en_livraison|livree',
+                'statut' => 'en_preparation|en_livraison|livree|terminee',
         ],
         methods: ['POST']
     )]

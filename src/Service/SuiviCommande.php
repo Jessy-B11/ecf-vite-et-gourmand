@@ -23,6 +23,10 @@ final class SuiviCommande
             'source' => 'en_livraison',
             'motif' => 'Livraison de la commande confirmée.',
         ],
+                'terminee' => [
+            'source' => 'livree',
+            'motif' => 'Commande terminée sans matériel à restituer.',
+        ],
     ];
 
     public function __construct(
@@ -100,6 +104,15 @@ final class SuiviCommande
                 ) {
                     throw new \DomainException(
                         'Le statut actuel ne permet pas cette action. Rechargez la commande.'
+                    );
+                }
+
+                if (
+                    $nouveauStatut === 'terminee'
+                    && $commande->isMaterielPrete()
+                ) {
+                    throw new \DomainException(
+                        'Le matériel prêté doit être restitué avant de terminer cette commande.'
                     );
                 }
 
