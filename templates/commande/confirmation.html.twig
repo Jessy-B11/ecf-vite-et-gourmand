@@ -1,0 +1,88 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Confirmer ma commande — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Vérifiez votre commande</h1>
+
+        <h2>{{ menu.nom }}</h2>
+
+        <p>
+            Livraison :
+            {{ confirmation.adresse_livraison }},
+            {{ confirmation.code_postal_livraison }}
+            {{ confirmation.ville_livraison }}
+        </p>
+
+        <p>
+            Prestation :
+            {{ confirmation.date_prestation|date('d/m/Y') }}
+            à {{ confirmation.heure_livraison }}
+        </p>
+
+        <p>
+            Téléphone : {{ confirmation.telephone_contact }}
+        </p>
+
+        <p>
+            Nombre de personnes : {{ confirmation.nombre_personnes }}
+        </p>
+
+        <p>
+            Menu avant remise :
+            {{ (recapitulatif.montant_menu / 100)
+                |number_format(2, ',', ' ') }} €
+        </p>
+
+        <p>
+            Remise :
+            {{ (recapitulatif.remise / 100)
+                |number_format(2, ',', ' ') }} €
+        </p>
+
+        <p>
+            Frais de livraison :
+            {{ (recapitulatif.frais_livraison / 100)
+                |number_format(2, ',', ' ') }} €
+        </p>
+
+        <p>
+            <strong>
+                Total :
+                {{ (recapitulatif.total / 100)
+                    |number_format(2, ',', ' ') }} €
+            </strong>
+        </p>
+
+        <p>
+            Votre commande sera soumise à la validation de l’équipe.
+        </p>
+
+        <form
+            method="post"
+            action="{{ path('app_commande_confirmation', {
+                jeton: confirmation.jeton_confirmation
+            }) }}"
+        >
+            <input
+                type="hidden"
+                name="_token"
+                value="{{ csrf_token(
+                    'confirmer_commande_'
+                    ~ confirmation.jeton_confirmation
+                ) }}"
+            >
+
+            <button type="submit">
+                Confirmer ma commande
+            </button>
+        </form>
+
+        <p>
+            <a href="{{ path('app_commande', {id: menu.id}) }}">
+                Recommencer la saisie
+            </a>
+        </p>
+    </main>
+{% endblock %}

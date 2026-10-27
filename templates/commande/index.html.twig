@@ -1,0 +1,114 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commander — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Commander : {{ menu.nom }}</h1>
+
+        <p>
+            Client : {{ client.prenom }} {{ client.nom }}
+            — {{ client.email }}
+        </p>
+
+        <section aria-labelledby="conditions-menu">
+            <h2 id="conditions-menu">Conditions du menu</h2>
+
+            <p>{{ menu.conditions }}</p>
+
+            <p>
+                Minimum : {{ menu.minimumPersonnes }} personnes.
+                Délai minimum :
+                {{ menu.delaiMinimumJours }} jours calendaires.
+            </p>
+        </section>
+
+        {% if commandeForm.vars.submitted
+            and not commandeForm.vars.valid %}
+            <p class="form-error" role="alert">
+                Veuillez corriger les erreurs du formulaire.
+            </p>
+        {% endif %}
+
+        {{ form_start(commandeForm, {
+            attr: {class: 'registration-form'}
+        }) }}
+        {{ form_errors(commandeForm) }}
+        {{ form_row(commandeForm.nombrePersonnes) }}
+        {{ form_row(commandeForm.datePrestation) }}
+        {{ form_row(commandeForm.heureLivraison) }}
+        {{ form_row(commandeForm.adresseLivraison) }}
+        {{ form_row(commandeForm.codePostalLivraison) }}
+        {{ form_row(commandeForm.villeLivraison) }}
+        {{ form_row(commandeForm.telephoneContact) }}
+
+        <button type="submit">
+            Calculer le prix du menu
+        </button>
+        {{ form_end(commandeForm) }}
+        {% if adresses_proposees is not empty %}
+            <section aria-labelledby="adresses-trouvees">
+                <h2 id="adresses-trouvees">
+                    Adresses trouvées
+                </h2>
+
+                <ul>
+                    {% for adresse in adresses_proposees %}
+                        <li>{{ adresse.properties.label }}</li>
+                    {% endfor %}
+                </ul>
+
+                <p>
+                    Vérifiez que l’adresse proposée correspond
+                    bien au lieu de livraison souhaité.
+                </p>
+            </section>
+        {% endif %}
+
+        {% if recapitulatif is not null %}
+            <section aria-labelledby="recapitulatif-menu">
+                <h2 id="recapitulatif-menu">
+                    Récapitulatif du prix du menu
+                </h2>
+
+                <p>
+                    Nombre de personnes :
+                    {{ recapitulatif.nombre_personnes }}
+                </p>
+
+                <p>
+                    Montant avant remise :
+                    {{ (recapitulatif.montant_menu / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    Remise :
+                    {{ (recapitulatif.remise / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    <strong>
+                        Montant du menu après remise :
+                        {{ (recapitulatif.montant_apres_remise / 100)
+                            |number_format(2, ',', ' ') }} €
+                    </strong>
+                </p>
+
+                <p>
+                    Frais de livraison à calculer.
+                    Ce montant concerne uniquement le menu.
+                </p>
+
+                <p>Aucune commande n’est encore enregistrée.</p>
+            </section>
+        {% endif %}
+
+        <p>
+            <a href="{{ path('app_menu_show', {id: menu.id}) }}">
+                Revenir au menu
+            </a>
+        </p>
+    </main>
+{% endblock %}

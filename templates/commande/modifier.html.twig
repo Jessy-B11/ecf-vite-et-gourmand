@@ -1,0 +1,115 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier ma commande — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Modifier la commande n°{{ commande.id }}</h1>
+
+        <p>
+            Menu : <strong>{{ menu.nom }}</strong>
+        </p>
+
+        <p>Le menu choisi ne peut pas être remplacé.</p>
+
+        <p>
+            Si vous conservez l’adresse, les frais de livraison
+            initiaux seront conservés. Si vous changez l’adresse,
+            ils seront recalculés selon la zone autorisée.
+        </p>
+
+        {% if modificationForm.vars.submitted
+            and not modificationForm.vars.valid %}
+            <p class="form-error" role="alert">
+                Veuillez corriger les erreurs du formulaire.
+            </p>
+        {% endif %}
+
+        {{ form_start(modificationForm, {
+            attr: {class: 'registration-form'}
+        }) }}
+
+        {{ form_errors(modificationForm) }}
+        {{ form_row(modificationForm.nombrePersonnes) }}
+        {{ form_row(modificationForm.datePrestation) }}
+        {{ form_row(modificationForm.heureLivraison) }}
+        {{ form_row(modificationForm.adresseLivraison) }}
+        {{ form_row(modificationForm.codePostalLivraison) }}
+        {{ form_row(modificationForm.villeLivraison) }}
+        {{ form_row(modificationForm.telephoneContact) }}
+
+        <button type="submit">
+            Vérifier mes modifications
+        </button>
+
+        {{ form_end(modificationForm) }}
+
+        {% if recapitulatif is not null %}
+            <section aria-labelledby="recapitulatif-modification">
+                <h2 id="recapitulatif-modification">
+                    Récapitulatif des modifications
+                </h2>
+
+                <p>
+                    Nombre de personnes :
+                    {{ recapitulatif.nombre_personnes }}
+                </p>
+
+                <p>
+                    Prestation :
+                    {{ recapitulatif.date_prestation|date('d/m/Y') }}
+                    à {{ recapitulatif.heure_livraison }}
+                </p>
+
+                <p>
+                    Menu avant remise :
+                    {{ (recapitulatif.montant_menu / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    Remise :
+                    {{ (recapitulatif.remise / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    Frais de livraison conservés :
+                    {{ (recapitulatif.frais_livraison / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    <strong>
+                        Nouveau total :
+                        {{ (recapitulatif.total / 100)
+                            |number_format(2, ',', ' ') }} €
+                    </strong>
+                </p>
+
+                <p>Aucune modification n’est encore enregistrée.</p>
+
+                <p>
+                    <a
+                        href="{{ path(
+                        'app_modification_commande_confirmation',
+                        {jeton: jeton_confirmation}
+                    ) }}"
+                    >
+                        Continuer vers la confirmation
+                    </a>
+                </p>
+            </section>
+        {% endif %}
+
+        <p>
+            <a
+                href="{{ path('app_mes_commandes_show', {
+                id: commande.id
+            }) }}"
+            >
+                Revenir à ma commande
+            </a>
+        </p>
+    </main>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Adresse de livraison — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Vérifiez votre adresse de livraison</h1>
+
+        <p>Menu choisi : {{ menu.nom }}</p>
+
+        <p>
+            Sélectionnez l’adresse correspondant
+            au lieu de livraison souhaité.
+        </p>
+
+        {{ form_start(confirmationForm) }}
+        {{ form_errors(confirmationForm) }}
+        {{ form_row(confirmationForm.adresse) }}
+
+        <button type="submit">
+            Confirmer l’adresse et calculer le total
+        </button>
+        {{ form_end(confirmationForm) }}
+
+        {% if recapitulatif is not null %}
+            <section aria-labelledby="recapitulatif-commande">
+                <h2 id="recapitulatif-commande">
+                    Récapitulatif de votre demande
+                </h2>
+
+                <p>Adresse : {{ recapitulatif.adresse }}</p>
+
+                <p>
+                    Prestation :
+                    {{ recapitulatif.date_prestation|date('d/m/Y') }}
+                    à {{ recapitulatif.heure_livraison }}
+                </p>
+
+                <p>
+                    Nombre de personnes :
+                    {{ recapitulatif.nombre_personnes }}
+                </p>
+
+                <p>
+                    Menu avant remise :
+                    {{ (recapitulatif.montant_menu / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    Remise :
+                    {{ (recapitulatif.remise / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+                <p>
+                    <a
+                        href="{{ path('app_commande_confirmation', {
+            jeton: jeton_confirmation
+        }) }}"
+                    >
+                        Continuer vers la confirmation
+                    </a>
+                </p>
+
+                {% if recapitulatif.dans_bordeaux %}
+                    <p>Livraison dans Bordeaux : gratuite.</p>
+                {% else %}
+                    <p>
+                        Distance routière aller :
+                        {{ (recapitulatif.distance_metres / 1000)
+                            |number_format(3, ',', ' ') }} km.
+                    </p>
+
+                    <p>Tarif : 5 € + 0,59 € par kilomètre.</p>
+                {% endif %}
+
+                <p>
+                    Frais de livraison :
+                    {{ (recapitulatif.frais_livraison / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+
+                <p>
+                    <strong>
+                        Total :
+                        {{ (recapitulatif.total / 100)
+                            |number_format(2, ',', ' ') }} €
+                    </strong>
+                </p>
+
+                <p>Aucune commande n’est encore enregistrée.</p>
+            </section>
+        {% endif %}
+
+        <p>
+            <a href="{{ path('app_commande', {id: menu.id}) }}">
+                Recommencer la saisie
+            </a>
+        </p>
+    </main>
+{% endblock %}

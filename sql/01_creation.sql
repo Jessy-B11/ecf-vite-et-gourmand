@@ -1,3 +1,4 @@
+BEGIN;
 CREATE TABLE theme (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     libelle VARCHAR(100) NOT NULL UNIQUE
@@ -89,6 +90,7 @@ CREATE TABLE utilisateur (
 
 CREATE TABLE commande (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    jeton_validation VARCHAR(32) UNIQUE,
     utilisateur_id INTEGER NOT NULL REFERENCES utilisateur(id),
     menu_id INTEGER NOT NULL REFERENCES menu(id),
 

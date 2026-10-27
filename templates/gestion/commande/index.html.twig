@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des commandes — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% set statuts = {
+        en_attente: 'En attente',
+        acceptee: 'Acceptée',
+        en_preparation: 'En préparation',
+        en_livraison: 'En livraison',
+        livree: 'Livrée',
+        attente_retour_materiel: 'En attente de retour du matériel',
+        terminee: 'Terminée',
+        annulee: 'Annulée'
+    } %}
+
+    <main class="container">
+        <h1>Gestion des commandes</h1>
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <p class="flash flash-{{ type }}" role="status">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        {% endfor %}
+
+        <p>Les 50 commandes les plus récentes sont affichées.</p>
+
+        {% for commande in commandes %}
+            <article>
+                <h2>Commande n°{{ commande.id }}</h2>
+
+                <p>
+                    Client :
+                    {{ commande.utilisateur.prenom }}
+                    {{ commande.utilisateur.nom }}
+                </p>
+
+                <p>Menu : {{ commande.menu.nom }}</p>
+
+                <p>
+                    Nombre de personnes :
+                    {{ commande.nombrePersonnes }}
+                </p>
+
+                <p>
+                    Prestation :
+                    {{ commande.datePrestation|date('d/m/Y') }}
+                    à {{ commande.heureLivraison|date('H:i') }}
+                </p>
+
+                <p>
+                    Statut :
+                    {{ statuts[commande.statut]
+                        ?? commande.statut }}
+                </p>
+
+                <p>
+                    Total :
+                    {{ (commande.montantTotalCentimes / 100)
+                        |number_format(2, ',', ' ') }} €
+                </p>
+                {% if commande.statut == 'en_attente' %}
+                    <form
+                        method="post"
+                        action="{{ path(
+            'app_gestion_commandes_accepter',
+            {id: commande.id}
+        ) }}"
+                    >
+                        <input
+                            type="hidden"
+                            name="_token"
+                            value="{{ csrf_token(
+                'accepter_commande_' ~ commande.id
+            ) }}"
+                        >
+
+                        <button type="submit">
+                            Accepter la commande n°{{ commande.id }}
+                        </button>
+                    </form>
+                {% endif %}
+            </article>
+        {% else %}
+            <p>Aucune commande enregistrée.</p>
+        {% endfor %}
+    </main>
+{% endblock %}

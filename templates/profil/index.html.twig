@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon profil — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Mon profil</h1>
+
+        <p>
+            Adresse email : <strong>{{ email }}</strong>
+        </p>
+
+        <p>
+            Ces coordonnées serviront au préremplissage de vos
+            prochaines commandes. Les commandes déjà enregistrées
+            conservent leurs propres coordonnées.
+        </p>
+
+        {% if profilForm.vars.submitted
+            and not profilForm.vars.valid %}
+            <p class="form-error" role="alert">
+                Veuillez corriger les erreurs du formulaire.
+            </p>
+        {% endif %}
+
+        {{ form_start(profilForm, {
+            attr: {class: 'registration-form'}
+        }) }}
+
+        {{ form_errors(profilForm) }}
+        {{ form_row(profilForm.nom) }}
+        {{ form_row(profilForm.prenom) }}
+        {{ form_row(profilForm.telephone) }}
+        {{ form_row(profilForm.adresse) }}
+        {{ form_row(profilForm.codePostal) }}
+        {{ form_row(profilForm.ville) }}
+
+        <button type="submit">
+            Enregistrer mon profil
+        </button>
+
+        {{ form_end(profilForm) }}
+
+        <p>
+            <a href="{{ path('app_mes_commandes') }}">
+                Consulter mes commandes
+            </a>
+        </p>
+    </main>
+{% endblock %}
