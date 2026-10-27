@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Repository\HistoriqueCommandeRepository;
 
 #[IsGranted('ROLE_EMPLOYE')]
 final class GestionCommandeController extends AbstractController
@@ -34,6 +35,45 @@ final class GestionCommandeController extends AbstractController
         return $this->render('gestion/commande/index.html.twig', [
             'commandes' => $commandeRepository
                 ->findDernieresPourGestion(),
+        ]);
+    }
+
+        #[Route(
+        '/gestion/commandes/{id}',
+        name: 'app_gestion_commandes_show',
+        requirements: ['id' => '\d+'],
+        methods: ['GET']
+    )]
+    public function show(
+        int $id,
+        CommandeRepository $commandeRepository,
+        HistoriqueCommandeRepository $historiqueCommandeRepository
+    ): Response {
+        $utilisateur = $this->getUser();
+
+        if (
+            !$utilisateur instanceof Utilisateur
+            || !$utilisateur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        $historique = $historiqueCommandeRepository->findBy(
+            ['commande' => $commande],
+            ['dateChangement' => 'ASC', 'id' => 'ASC']
+        );
+
+        return $this->render('gestion/commande/detail.html.twig', [
+            'commande' => $commande,
+            'historique' => $historique,
         ]);
     }
 

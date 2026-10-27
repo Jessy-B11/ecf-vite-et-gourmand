@@ -28,7 +28,16 @@
 
         {% for commande in commandes %}
             <article>
-                <h2>Commande n°{{ commande.id }}</h2>
+                <h2>
+                    <a
+                        href="{{ path(
+                            'app_gestion_commandes_show',
+                            {id: commande.id}
+                    ) }}"
+                    >
+                        Commande n°{{ commande.id }}
+                    </a>
+                </h2>
 
                 <p>
                     Client :
