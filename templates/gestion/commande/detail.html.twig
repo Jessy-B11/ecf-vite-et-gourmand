@@ -154,14 +154,22 @@
     }
 } %}
 
-        {% if commande.statut == 'livree'
-    and not commande.materielPrete %}
-            {% set actionsSuivi = actionsSuivi|merge({
-        livree: {
-            statut: 'terminee',
-            libelle: 'Terminer la commande'
-        }
-    }) %}
+        {% if commande.statut == 'livree' %}
+            {% if commande.materielPrete %}
+                {% set actionsSuivi = actionsSuivi|merge({
+            livree: {
+                statut: 'attente_retour_materiel',
+                libelle: 'Demander le retour du matériel'
+            }
+        }) %}
+            {% else %}
+                {% set actionsSuivi = actionsSuivi|merge({
+            livree: {
+                statut: 'terminee',
+                libelle: 'Terminer la commande'
+            }
+        }) %}
+            {% endif %}
         {% endif %}
 
         {% if actionsSuivi[commande.statut] is defined %}

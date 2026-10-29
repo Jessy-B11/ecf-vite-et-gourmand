@@ -4,15 +4,16 @@ namespace App\Controller;
 
 use App\Entity\Utilisateur;
 use App\Repository\CommandeRepository;
+use App\Repository\HistoriqueCommandeRepository;
 use App\Service\AcceptationCommande;
+use App\Service\EmailRetourMateriel;
+use App\Service\PretMaterielCommande;
+use App\Service\SuiviCommande;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use App\Repository\HistoriqueCommandeRepository;
-use App\Service\SuiviCommande;
-use App\Service\PretMaterielCommande;
 
 #[IsGranted('ROLE_EMPLOYE')]
 final class GestionCommandeController extends AbstractController
@@ -40,7 +41,7 @@ final class GestionCommandeController extends AbstractController
         ]);
     }
 
-        #[Route(
+    #[Route(
         '/gestion/commandes/{id}',
         name: 'app_gestion_commandes_show',
         requirements: ['id' => '\d+'],
@@ -148,12 +149,13 @@ final class GestionCommandeController extends AbstractController
             Response::HTTP_SEE_OTHER
         );
     }
-        #[Route(
+
+    #[Route(
         '/gestion/commandes/{id}/suivi/{statut}',
         name: 'app_gestion_commandes_suivi',
         requirements: [
             'id' => '\d+',
-                'statut' => 'en_preparation|en_livraison|livree|terminee',
+            'statut' => 'en_preparation|en_livraison|livree|terminee|attente_retour_materiel',
         ],
         methods: ['POST']
     )]
@@ -162,7 +164,8 @@ final class GestionCommandeController extends AbstractController
         string $statut,
         Request $request,
         CommandeRepository $commandeRepository,
-        SuiviCommande $suiviCommande
+        SuiviCommande $suiviCommande,
+        EmailRetourMateriel $emailRetourMateriel
     ): Response {
         $auteur = $this->getUser();
 
@@ -209,6 +212,13 @@ final class GestionCommandeController extends AbstractController
             );
         }
 
+        if (
+            $modifiee
+            && $statut === 'attente_retour_materiel'
+        ) {
+            $emailRetourMateriel->envoyer($commande);
+        }
+
         $this->addFlash(
             'success',
             $modifiee
@@ -222,7 +232,8 @@ final class GestionCommandeController extends AbstractController
             Response::HTTP_SEE_OTHER
         );
     }
-        #[Route(
+
+    #[Route(
         '/gestion/commandes/{id}/materiel/{pret}',
         name: 'app_gestion_commandes_materiel',
         requirements: [

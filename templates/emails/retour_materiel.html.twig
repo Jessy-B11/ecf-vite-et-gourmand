@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Retour du matériel</title>
+    </head>
+
+    <body>
+        <h1>Retour du matériel prêté</h1>
+
+        <p>Bonjour {{ commande.utilisateur.prenom }},</p>
+
+        <p>
+            Votre commande n°{{ commande.id }} a été livrée.
+            Elle est maintenant en attente de restitution
+            du matériel prêté.
+        </p>
+
+        <p>
+            Vous disposez de <strong>10 jours ouvrés</strong>
+            pour restituer ce matériel à compter de cette notification.
+        </p>
+
+        <p>
+            En cas de non-restitution dans ce délai,
+            des frais de <strong>600 €</strong> sont prévus.
+        </p>
+
+        <p>
+            Merci de prendre contact avec notre équipe
+            pour organiser la restitution.
+        </p>
+
+        <p>
+            Si vous avez déjà rendu le matériel,
+            contactez-nous afin que nous mettions
+            votre commande à jour.
+        </p>
+
+        <p>
+            Merci pour votre confiance.<br>
+            L’équipe Vite &amp; Gourmand
+        </p>
+    </body>
+</html>

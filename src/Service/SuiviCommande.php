@@ -27,6 +27,10 @@ final class SuiviCommande
             'source' => 'livree',
             'motif' => 'Commande terminée sans matériel à restituer.',
         ],
+                'attente_retour_materiel' => [
+            'source' => 'livree',
+            'motif' => 'Commande en attente de restitution du matériel prêté.',
+        ],
     ];
 
     public function __construct(
@@ -113,6 +117,18 @@ final class SuiviCommande
                 ) {
                     throw new \DomainException(
                         'Le matériel prêté doit être restitué avant de terminer cette commande.'
+                    );
+                }
+
+                if (
+                    $nouveauStatut === 'attente_retour_materiel'
+                    && (
+                        !$commande->isMaterielPrete()
+                        || $commande->getDateRetourMateriel() !== null
+                    )
+                ) {
+                    throw new \DomainException(
+                        'Cette commande ne comporte pas de matériel à restituer.'
                     );
                 }
 
