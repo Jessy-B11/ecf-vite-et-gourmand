@@ -40,31 +40,17 @@
                         <a href="{{ path('app_mes_commandes') }}">
                             Mes commandes
                         </a>
-                        {% if is_granted('ROLE_EMPLOYE') %}
-                            <a href="{{ path('app_gestion_commandes') }}">
-                                Gestion des commandes
-                            </a>
-                        {% endif %}
                     {% endif %}
-                    {% if app.user %}
-                        {% if is_granted('ROLE_CLIENT') %}
-                            <a href="{{ path('app_profil') }}">
-                                Mon profil
-                            </a>
 
-                            <a href="{{ path('app_mes_commandes') }}">
-                                Mes commandes
-                            </a>
-                        {% endif %}
-
-                        <a href="{{ path('app_logout') }}">
-                            Se déconnecter
-                        </a>
-                    {% else %}
-                        <a href="{{ path('app_login') }}">
-                            Se connecter
+                    {% if is_granted('ROLE_EMPLOYE') %}
+                        <a href="{{ path('app_gestion_commandes') }}">
+                            Commandes
                         </a>
                     {% endif %}
+
+                    <a href="{{ path('app_logout') }}">
+                        Se déconnecter
+                    </a>
                 {% else %}
                     <a href="{{ path('app_login') }}">
                         Se connecter
