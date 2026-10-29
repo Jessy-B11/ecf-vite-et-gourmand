@@ -253,6 +253,47 @@
             </section>
         {% endif %}
 
+        {% if commande.dateRetourMateriel is not null %}
+            <p>
+                Restitution confirmée le
+                {{ commande.dateRetourMateriel
+            |date('d/m/Y à H:i:s', 'Europe/Paris') }}
+            </p>
+        {% endif %}
+
+        {% if commande.statut == 'attente_retour_materiel'
+    and commande.materielPrete
+    and commande.dateRetourMateriel is null %}
+            <section aria-labelledby="retour-materiel">
+                <h2 id="retour-materiel">Restitution du matériel</h2>
+
+                <p>
+                    Confirmez uniquement après réception de l’ensemble
+                    du matériel prêté pour cette commande.
+                </p>
+
+                <form
+                    method="post"
+                    action="{{ path(
+                'app_gestion_commandes_retour_materiel',
+                {id: commande.id}
+            ) }}"
+                >
+                    <input
+                        type="hidden"
+                        name="_token"
+                        value="{{ csrf_token(
+                    'retour_materiel_commande_' ~ commande.id
+                ) }}"
+                    >
+
+                    <button type="submit">
+                        Confirmer la restitution et terminer la commande
+                    </button>
+                </form>
+            </section>
+        {% endif %}
+
         <section aria-labelledby="historique-commande">
             <h2 id="historique-commande">Historique</h2>
 

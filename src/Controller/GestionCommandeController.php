@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\RetourMaterielCommande;
 
 #[IsGranted('ROLE_EMPLOYE')]
 final class GestionCommandeController extends AbstractController
@@ -299,6 +300,76 @@ final class GestionCommandeController extends AbstractController
             $modifiee
                 ? 'Le prêt de matériel a bien été mis à jour.'
                 : 'Ce choix est déjà enregistré.'
+        );
+
+        return $this->redirectToRoute(
+            'app_gestion_commandes_show',
+            ['id' => $id],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+
+        #[Route(
+        '/gestion/commandes/{id}/materiel/retour',
+        name: 'app_gestion_commandes_retour_materiel',
+        requirements: ['id' => '\d+'],
+        methods: ['POST']
+    )]
+    public function retourMateriel(
+        int $id,
+        Request $request,
+        CommandeRepository $commandeRepository,
+        RetourMaterielCommande $retourMaterielCommande
+    ): Response {
+        $auteur = $this->getUser();
+
+        if (
+            !$auteur instanceof Utilisateur
+            || !$auteur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'retour_materiel_commande_' . $id,
+            $request->request->getString('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Le formulaire est invalide. Rechargez la page.'
+            );
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        try {
+            $modifiee = $retourMaterielCommande->confirmer(
+                $commande,
+                $auteur
+            );
+        } catch (\DomainException | \InvalidArgumentException $exception) {
+            $this->addFlash(
+                'warning',
+                $exception->getMessage()
+            );
+
+            return $this->redirectToRoute(
+                'app_gestion_commandes_show',
+                ['id' => $id],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        $this->addFlash(
+            'success',
+            $modifiee
+                ? 'La restitution du matériel est enregistrée. La commande est terminée.'
+                : 'La restitution du matériel est déjà enregistrée.'
         );
 
         return $this->redirectToRoute(
