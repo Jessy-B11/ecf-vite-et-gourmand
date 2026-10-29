@@ -197,6 +197,53 @@
                 </form>
             </section>
         {% endif %}
+        {% if commande.statut in ['en_attente', 'acceptee'] %}
+            {% set pretSouhaite = commande.materielPrete ? '0' : '1' %}
+
+            <section aria-labelledby="gestion-materiel">
+                <h2 id="gestion-materiel">Prêt de matériel</h2>
+
+                <p>
+                    Prêt actuellement prévu :
+                    <strong>
+                        {{ commande.materielPrete ? 'Oui' : 'Non' }}
+                    </strong>
+                </p>
+
+                <p>
+                    Ce choix peut être modifié avant le début
+                    de la préparation.
+                </p>
+
+                <form
+                    method="post"
+                    action="{{ path(
+                'app_gestion_commandes_materiel',
+                {
+                    id: commande.id,
+                    pret: pretSouhaite
+                }
+            ) }}"
+                >
+                    <input
+                        type="hidden"
+                        name="_token"
+                        value="{{ csrf_token(
+                    'materiel_commande_'
+                    ~ commande.id
+                    ~ '_'
+                    ~ pretSouhaite
+                ) }}"
+                    >
+
+                    <button type="submit">
+                        {{ commande.materielPrete
+                    ? 'Retirer le prêt prévu'
+                    : 'Prévoir un prêt de matériel' }}
+                    </button>
+                </form>
+            </section>
+        {% endif %}
 
         <section aria-labelledby="historique-commande">
             <h2 id="historique-commande">Historique</h2>

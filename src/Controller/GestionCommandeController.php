@@ -12,6 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Repository\HistoriqueCommandeRepository;
 use App\Service\SuiviCommande;
+use App\Service\PretMaterielCommande;
 
 #[IsGranted('ROLE_EMPLOYE')]
 final class GestionCommandeController extends AbstractController
@@ -213,6 +214,80 @@ final class GestionCommandeController extends AbstractController
             $modifiee
                 ? 'Le statut de la commande a bien été mis à jour.'
                 : 'La commande possède déjà ce statut.'
+        );
+
+        return $this->redirectToRoute(
+            'app_gestion_commandes_show',
+            ['id' => $id],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+        #[Route(
+        '/gestion/commandes/{id}/materiel/{pret}',
+        name: 'app_gestion_commandes_materiel',
+        requirements: [
+            'id' => '\d+',
+            'pret' => '0|1',
+        ],
+        methods: ['POST']
+    )]
+    public function materiel(
+        int $id,
+        string $pret,
+        Request $request,
+        CommandeRepository $commandeRepository,
+        PretMaterielCommande $pretMaterielCommande
+    ): Response {
+        $auteur = $this->getUser();
+
+        if (
+            !$auteur instanceof Utilisateur
+            || !$auteur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'materiel_commande_' . $id . '_' . $pret,
+            $request->request->getString('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Le formulaire est invalide. Rechargez la page.'
+            );
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        try {
+            $modifiee = $pretMaterielCommande->definir(
+                $commande,
+                $auteur,
+                $pret === '1'
+            );
+        } catch (\DomainException | \InvalidArgumentException $exception) {
+            $this->addFlash(
+                'warning',
+                $exception->getMessage()
+            );
+
+            return $this->redirectToRoute(
+                'app_gestion_commandes_show',
+                ['id' => $id],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        $this->addFlash(
+            'success',
+            $modifiee
+                ? 'Le prêt de matériel a bien été mis à jour.'
+                : 'Ce choix est déjà enregistré.'
         );
 
         return $this->redirectToRoute(
