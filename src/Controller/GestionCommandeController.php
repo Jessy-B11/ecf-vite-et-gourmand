@@ -20,7 +20,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 #[IsGranted('ROLE_EMPLOYE')]
 final class GestionCommandeController extends AbstractController
 {
-       #[Route(
+    #[Route(
         '/gestion/commandes',
         name: 'app_gestion_commandes',
         methods: ['GET']
@@ -53,10 +53,15 @@ final class GestionCommandeController extends AbstractController
 
         $statut = $parametres['statut'] ?? '';
         $client = $parametres['client'] ?? '';
+        $pageSaisie = $parametres['page'] ?? '1';
 
-        if (!is_string($statut) || !is_string($client)) {
+        if (
+            !is_string($statut)
+            || !is_string($client)
+            || !is_string($pageSaisie)
+        ) {
             throw new BadRequestHttpException(
-                'Les filtres doivent être des valeurs textuelles.'
+                'Les paramètres de recherche sont invalides.'
             );
         }
 
@@ -78,12 +83,41 @@ final class GestionCommandeController extends AbstractController
             );
         }
 
+        if (!preg_match('/^[1-9][0-9]{0,5}$/D', $pageSaisie)) {
+            throw new BadRequestHttpException(
+                'Le numéro de page est invalide.'
+            );
+        }
+
+        $page = (int) $pageSaisie;
+
+        $commandes = $commandeRepository
+            ->findDernieresPourGestion($statut, $client, $page);
+
+        $total = count($commandes);
+
+        $nombrePages = max(
+            1,
+            (int) ceil(
+                $total / CommandeRepository::ELEMENTS_PAR_PAGE
+            )
+        );
+
+        if ($page > $nombrePages) {
+            throw $this->createNotFoundException(
+                'Cette page de résultats n’existe pas.'
+            );
+        }
+
         return $this->render('gestion/commande/index.html.twig', [
-            'commandes' => $commandeRepository
-                ->findDernieresPourGestion($statut, $client),
+            'commandes' => $commandes,
             'statuts' => $statuts,
             'filtre_statut' => $statut,
             'filtre_client' => $client,
+            'page_courante' => $page,
+            'nombre_pages' => $nombrePages,
+            'nombre_resultats' => $total,
+            'elements_par_page' => CommandeRepository::ELEMENTS_PAR_PAGE,
         ]);
     }
 

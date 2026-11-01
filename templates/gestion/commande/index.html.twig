@@ -56,8 +56,8 @@
         </form>
 
         <p>
-            Jusqu’à 50 commandes correspondant aux filtres,
-            des plus récentes aux plus anciennes.
+            {{ nombre_resultats }} commande(s) correspondant aux filtres.
+            Jusqu’à {{ elements_par_page }} commandes par page.
         </p>
 
         {% for commande in commandes %}
@@ -128,5 +128,36 @@
         {% else %}
             <p>Aucune commande ne correspond aux filtres.</p>
         {% endfor %}
+        {% if nombre_pages > 1 %}
+            <nav aria-label="Pagination des commandes">
+                {% if page_courante > 1 %}
+                    <a
+                        href="{{ path('app_gestion_commandes', {
+                statut: filtre_statut,
+                client: filtre_client,
+                page: page_courante - 1
+            }) }}"
+                    >
+                        Page précédente
+                    </a>
+                {% endif %}
+
+                <span aria-current="page">
+                    Page {{ page_courante }} sur {{ nombre_pages }}
+                </span>
+
+                {% if page_courante < nombre_pages %}
+                    <a
+                        href="{{ path('app_gestion_commandes', {
+                statut: filtre_statut,
+                client: filtre_client,
+                page: page_courante + 1
+            }) }}"
+                    >
+                        Page suivante
+                    </a>
+                {% endif %}
+            </nav>
+        {% endif %}
     </main>
 {% endblock %}
