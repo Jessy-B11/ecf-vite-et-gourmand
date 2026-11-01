@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Annuler la commande n°{{ commande.id }} — Gestion
+{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Annuler la commande n°{{ commande.id }}</h1>
+
+        <p>
+            Client :
+            {{ commande.utilisateur.prenom }}
+            {{ commande.utilisateur.nom }}
+        </p>
+
+        <p>
+            Email :
+            {{ commande.utilisateur.email }}
+        </p>
+
+        <p>
+            Téléphone de la commande :
+            {{ commande.telephoneContact }}
+        </p>
+
+        <p>Menu : {{ commande.menu.nom }}</p>
+
+        <p>
+            Prestation :
+            {{ commande.datePrestation|date('d/m/Y') }}
+            à {{ commande.heureLivraison|date('H:i') }}
+        </p>
+
+        <p>
+            Contactez le client avant de confirmer.
+            L’annulation rendra une unité de stock au menu.
+        </p>
+
+        {% if annulationForm.vars.submitted
+            and not annulationForm.vars.valid %}
+            <p class="form-error" role="alert">
+                Veuillez corriger les erreurs du formulaire.
+            </p>
+        {% endif %}
+
+        {{ form_start(annulationForm, {
+            action: path('app_gestion_commandes_annuler', {
+                id: commande.id
+            }),
+            attr: {class: 'registration-form'}
+        }) }}
+
+        {{ form_errors(annulationForm) }}
+        {{ form_row(annulationForm.modeContact) }}
+        {{ form_row(annulationForm.motif) }}
+        {{ form_row(annulationForm.clientContacte) }}
+
+        <button type="submit">
+            Confirmer l’annulation de la commande
+        </button>
+
+        {{ form_end(annulationForm) }}
+
+        <p>
+            <a
+                href="{{ path('app_gestion_commandes_show', {
+                id: commande.id
+            }) }}"
+            >
+                Revenir au détail sans annuler
+            </a>
+        </p>
+    </main>
+{% endblock %}

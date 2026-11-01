@@ -294,6 +294,22 @@
             </section>
         {% endif %}
 
+        {% if commande.statut in [
+    'en_attente',
+    'acceptee',
+    'en_preparation'
+] %}
+            <p>
+                <a
+                    href="{{ path('app_gestion_commandes_annuler', {
+            id: commande.id
+        }) }}"
+                >
+                    Annuler après contact avec le client
+                </a>
+            </p>
+        {% endif %}
+
         <section aria-labelledby="historique-commande">
             <h2 id="historique-commande">Historique</h2>
 
