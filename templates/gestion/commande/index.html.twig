@@ -3,17 +3,6 @@
 {% block title %}Gestion des commandes — Vite & Gourmand{% endblock %}
 
 {% block body %}
-    {% set statuts = {
-        en_attente: 'En attente',
-        acceptee: 'Acceptée',
-        en_preparation: 'En préparation',
-        en_livraison: 'En livraison',
-        livree: 'Livrée',
-        attente_retour_materiel: 'En attente de retour du matériel',
-        terminee: 'Terminée',
-        annulee: 'Annulée'
-    } %}
-
     <main class="container">
         <h1>Gestion des commandes</h1>
         {% for type, messages in app.flashes %}
@@ -24,7 +13,52 @@
             {% endfor %}
         {% endfor %}
 
-        <p>Les 50 commandes les plus récentes sont affichées.</p>
+        <form
+            method="get"
+            action="{{ path('app_gestion_commandes') }}"
+        >
+            <div>
+                <label for="filtre-statut">Statut</label>
+
+                <select id="filtre-statut" name="statut">
+                    <option value="">Tous les statuts</option>
+
+                    {% for valeur, libelle in statuts %}
+                        <option
+                            value="{{ valeur }}"
+                            {% if filtre_statut == valeur %}selected{% endif %}
+                        >
+                            {{ libelle }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="filtre-client">
+                    Client : nom, prénom ou email
+                </label>
+
+                <input
+                    type="search"
+                    id="filtre-client"
+                    name="client"
+                    value="{{ filtre_client }}"
+                    maxlength="100"
+                >
+            </div>
+
+            <button type="submit">Filtrer</button>
+
+            <a href="{{ path('app_gestion_commandes') }}">
+                Réinitialiser les filtres
+            </a>
+        </form>
+
+        <p>
+            Jusqu’à 50 commandes correspondant aux filtres,
+            des plus récentes aux plus anciennes.
+        </p>
 
         {% for commande in commandes %}
             <article>
@@ -92,7 +126,7 @@
                 {% endif %}
             </article>
         {% else %}
-            <p>Aucune commande enregistrée.</p>
+            <p>Aucune commande ne correspond aux filtres.</p>
         {% endfor %}
     </main>
 {% endblock %}

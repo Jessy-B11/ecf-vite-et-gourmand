@@ -15,16 +15,18 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\RetourMaterielCommande;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 #[IsGranted('ROLE_EMPLOYE')]
 final class GestionCommandeController extends AbstractController
 {
-    #[Route(
+       #[Route(
         '/gestion/commandes',
         name: 'app_gestion_commandes',
         methods: ['GET']
     )]
     public function index(
+        Request $request,
         CommandeRepository $commandeRepository
     ): Response {
         $utilisateur = $this->getUser();
@@ -36,9 +38,52 @@ final class GestionCommandeController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
+        $statuts = [
+            'en_attente' => 'En attente',
+            'acceptee' => 'Acceptée',
+            'en_preparation' => 'En préparation',
+            'en_livraison' => 'En livraison',
+            'livree' => 'Livrée',
+            'attente_retour_materiel' => 'En attente de retour du matériel',
+            'terminee' => 'Terminée',
+            'annulee' => 'Annulée',
+        ];
+
+        $parametres = $request->query->all();
+
+        $statut = $parametres['statut'] ?? '';
+        $client = $parametres['client'] ?? '';
+
+        if (!is_string($statut) || !is_string($client)) {
+            throw new BadRequestHttpException(
+                'Les filtres doivent être des valeurs textuelles.'
+            );
+        }
+
+        $statut = trim($statut);
+        $client = trim($client);
+
+        if (
+            $statut !== ''
+            && !array_key_exists($statut, $statuts)
+        ) {
+            throw new BadRequestHttpException(
+                'Le statut demandé est invalide.'
+            );
+        }
+
+        if (mb_strlen($client) > 100) {
+            throw new BadRequestHttpException(
+                'La recherche client est limitée à 100 caractères.'
+            );
+        }
+
         return $this->render('gestion/commande/index.html.twig', [
             'commandes' => $commandeRepository
-                ->findDernieresPourGestion(),
+                ->findDernieresPourGestion($statut, $client),
+            'statuts' => $statuts,
+            'filtre_statut' => $statut,
+            'filtre_client' => $client,
         ]);
     }
 

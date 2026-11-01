@@ -16,17 +16,44 @@ class CommandeRepository extends ServiceEntityRepository
         parent::__construct($registry, Commande::class);
     }
 
-    public function findDernieresPourGestion(): array
-    {
-        return $this->createQueryBuilder('c')
+
+    /**
+     * @return Commande[]
+     */
+    public function findDernieresPourGestion(
+        ?string $statut = null,
+        ?string $client = null
+    ): array {
+        $qb = $this->createQueryBuilder('c')
             ->addSelect('u', 'm')
             ->join('c.utilisateur', 'u')
             ->join('c.menu', 'm')
             ->orderBy('c.dateCreation', 'DESC')
             ->addOrderBy('c.id', 'DESC')
-            ->setMaxResults(50)
-            ->getQuery()
-            ->getResult();
+            ->setMaxResults(50);
+
+        if ($statut !== null && $statut !== '') {
+            $qb
+                ->andWhere('c.statut = :statut')
+                ->setParameter('statut', $statut);
+        }
+
+        if ($client !== null && trim($client) !== '') {
+            $qb
+                ->andWhere(
+                    $qb->expr()->orX(
+                        'LOWER(u.nom) LIKE LOWER(:client)',
+                        'LOWER(u.prenom) LIKE LOWER(:client)',
+                        'LOWER(u.email) LIKE LOWER(:client)'
+                    )
+                )
+                ->setParameter(
+                    'client',
+                    '%' . trim($client) . '%'
+                );
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
 //    public function findOneBySomeField($value): ?Commande
