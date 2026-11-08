@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Vite &amp; Gourmand</h1>
+        <p>Découvrez nos menus pour vos repas et vos événements.</p>
+        <p><a href="{{ path('app_menu') }}">Découvrir nos menus</a></p>
+
+        <section aria-labelledby="avis-clients">
+            <h2 id="avis-clients">Les avis de nos clients</h2>
+
+            {% for avis in avisValides %}
+                <article>
+                    <h3>Note de {{ avis.note }} sur 5</h3>
+                    <p>{{ avis.commentaire }}</p>
+                </article>
+            {% else %}
+                <p>Aucun avis publié pour le moment.</p>
+            {% endfor %}
+        </section>
+    </main>
+{% endblock %}

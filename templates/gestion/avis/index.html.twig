@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modération des avis — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Modération des avis</h1>
+
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <p role="{{ type == 'warning' ? 'alert' : 'status' }}">{{ message }}</p>
+            {% endfor %}
+        {% endfor %}
+
+        {% for avis in avisEnAttente %}
+            <article>
+                <h2>Avis sur la commande n°{{ avis.commande.id }}</h2>
+                <p>Note : {{ avis.note }}/5</p>
+                <p>{{ avis.commentaire }}</p>
+                <p>Déposé le {{ avis.dateCreation|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
+                {% for decision, libelle in {'valide': 'Approuver', 'refuse': 'Refuser'} %}
+                    <form
+                        method="post"
+                        action="{{ path('app_gestion_avis_moderer', {
+        id: avis.id,
+        decision: decision
+    }) }}"
+                    >
+                        <input
+                            type="hidden"
+                            name="_token"
+                            value="{{ csrf_token('moderer_avis_' ~ avis.id ~ '_' ~ decision) }}"
+                        >
+                        <button type="submit">{{ libelle }}</button>
+                    </form>
+                {% endfor %}
+            </article>
+        {% else %}
+            <p>Aucun avis en attente de modération.</p>
+        {% endfor %}
+    </main>
+{% endblock %}

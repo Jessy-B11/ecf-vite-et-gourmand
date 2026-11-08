@@ -16,6 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Service\RetourMaterielCommande;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use App\Service\EmailInvitationAvis;
 
 #[IsGranted('ROLE_EMPLOYE')]
 final class GestionCommandeController extends AbstractController
@@ -245,7 +246,8 @@ final class GestionCommandeController extends AbstractController
         Request $request,
         CommandeRepository $commandeRepository,
         SuiviCommande $suiviCommande,
-        EmailRetourMateriel $emailRetourMateriel
+        EmailRetourMateriel $emailRetourMateriel,
+        EmailInvitationAvis $emailInvitationAvis
     ): Response {
         $auteur = $this->getUser();
 
@@ -297,6 +299,9 @@ final class GestionCommandeController extends AbstractController
             && $statut === 'attente_retour_materiel'
         ) {
             $emailRetourMateriel->envoyer($commande);
+        }
+        if ($modifiee && $statut === 'terminee') {
+            $emailInvitationAvis->envoyer($commande);
         }
 
         $this->addFlash(
@@ -398,7 +403,8 @@ final class GestionCommandeController extends AbstractController
         int $id,
         Request $request,
         CommandeRepository $commandeRepository,
-        RetourMaterielCommande $retourMaterielCommande
+        RetourMaterielCommande $retourMaterielCommande,
+        EmailInvitationAvis $emailInvitationAvis
     ): Response {
         $auteur = $this->getUser();
 
@@ -442,6 +448,10 @@ final class GestionCommandeController extends AbstractController
                 ['id' => $id],
                 Response::HTTP_SEE_OTHER
             );
+        }
+
+        if ($modifiee && $commande->getStatut() === 'terminee') {
+            $emailInvitationAvis->envoyer($commande);
         }
 
         $this->addFlash(

@@ -142,6 +142,15 @@
                 </form>
             </section>
         {% endif %}
+        </section>
+
+        {% if commande.statut == 'terminee' %}
+            <p>
+                <a href="{{ path('app_commande_avis', {id: commande.id}) }}">
+                    Laisser un avis
+                </a>
+            </p>
+        {% endif %}
 
         <a href="{{ path('app_mes_commandes') }}">
             Revenir à mes commandes

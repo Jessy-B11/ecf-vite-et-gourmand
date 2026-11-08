@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Laisser un avis — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Laisser un avis sur la commande n°{{ commande.id }}</h1>
+
+        {{ form_start(avisForm) }}
+            {{ form_row(avisForm.note) }}
+            {{ form_row(avisForm.commentaire) }}
+            <button type="submit">Envoyer mon avis</button>
+        {{ form_end(avisForm) }}
+
+        <p><a href="{{ path('app_mes_commandes') }}">Retour à mes commandes</a></p>
+    </main>
+{% endblock %}
