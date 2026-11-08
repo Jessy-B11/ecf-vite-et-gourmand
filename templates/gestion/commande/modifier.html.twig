@@ -1,0 +1,85 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Modifier la commande n°{{ commande.id }} — Gestion
+{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Modifier la commande n°{{ commande.id }}</h1>
+
+        <p>
+            Client :
+            {{ commande.utilisateur.prenom }}
+            {{ commande.utilisateur.nom }}
+        </p>
+
+        <p>Email : {{ commande.utilisateur.email }}</p>
+
+        <p>
+            Téléphone actuel :
+            {{ commande.telephoneContact }}
+        </p>
+
+        <p>Menu conservé : {{ commande.menu.nom }}</p>
+
+        <p>
+            Contactez le client avant de préparer la modification.
+            L’enregistrement définitif nécessitera une confirmation.
+        </p>
+
+        {% if modificationForm.vars.submitted
+            and not modificationForm.vars.valid %}
+            <p class="form-error" role="alert">
+                Veuillez corriger les erreurs du formulaire.
+            </p>
+        {% endif %}
+
+        {% if saisie_verifiee %}
+            <p role="status">
+                La saisie du formulaire est valide.
+                Aucune modification n’est encore enregistrée.
+                La vérification de l’adresse et des montants
+                sera ajoutée à l’étape suivante.
+            </p>
+        {% endif %}
+
+        {{ form_start(modificationForm, {
+            attr: {class: 'registration-form'}
+        }) }}
+
+        {{ form_errors(modificationForm) }}
+
+        <h2>Informations de prestation</h2>
+
+        {{ form_row(modificationForm.nombrePersonnes) }}
+        {{ form_row(modificationForm.datePrestation) }}
+        {{ form_row(modificationForm.heureLivraison) }}
+        {{ form_row(modificationForm.adresseLivraison) }}
+        {{ form_row(modificationForm.codePostalLivraison) }}
+        {{ form_row(modificationForm.villeLivraison) }}
+        {{ form_row(modificationForm.telephoneContact) }}
+
+        <h2>Contact préalable</h2>
+
+        {{ form_row(modificationForm.modeContact) }}
+        {{ form_row(modificationForm.motif) }}
+        {{ form_row(modificationForm.clientContacte) }}
+
+        <button type="submit">
+            Vérifier la saisie
+        </button>
+
+        {{ form_end(modificationForm) }}
+
+        <p>
+            <a
+                href="{{ path('app_gestion_commandes_show', {
+                id: commande.id
+            }) }}"
+            >
+                Revenir au détail sans enregistrer
+            </a>
+        </p>
+    </main>
+{% endblock %}

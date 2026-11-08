@@ -293,6 +293,21 @@
                 </form>
             </section>
         {% endif %}
+        {% if commande.statut in [
+    'en_attente',
+    'acceptee',
+    'en_preparation'
+] %}
+            <p>
+                <a
+                    href="{{ path('app_gestion_commandes_modifier', {
+            id: commande.id
+        }) }}"
+                >
+                    Modifier après contact avec le client
+                </a>
+            </p>
+        {% endif %}
 
         {% if commande.statut in [
     'en_attente',
