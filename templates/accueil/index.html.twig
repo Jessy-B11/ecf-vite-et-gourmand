@@ -3,22 +3,52 @@
 {% block title %}Accueil — Vite & Gourmand{% endblock %}
 
 {% block body %}
-    <main class="container">
-        <h1>Vite &amp; Gourmand</h1>
-        <p>Découvrez nos menus pour vos repas et vos événements.</p>
-        <p><a href="{{ path('app_menu') }}">Découvrir nos menus</a></p>
+    <main class="container accueil">
+        <section class="accueil-hero" aria-labelledby="accueil-titre">
+            <div>
+                <p class="accueil-surtitre">Traiteur à Bordeaux</p>
+                <h1 id="accueil-titre">Des menus pour vos repas et vos événements</h1>
+                <p>
+                    Avec Vite &amp; Gourmand, choisissez un menu adapté à votre
+                    occasion, à vos convives et à leurs préférences alimentaires.
+                </p>
+                <a class="accueil-bouton" href="{{ path('app_menu') }}">
+                    Découvrir nos menus
+                </a>
+            </div>
 
-        <section aria-labelledby="avis-clients">
+            <img
+                class="accueil-photo"
+                src="/images/menus/poulet-roti.png"
+                alt="Poulet rôti accompagné de riz blanc et de persil"
+            >
+        </section>
+
+        <section class="accueil-section" aria-labelledby="accueil-equipe">
+            <p class="accueil-surtitre">Notre histoire</p>
+            <h2 id="accueil-equipe">Julie et José, traiteurs depuis 25 ans</h2>
+            <p>
+                À Bordeaux, Julie et José préparent des menus pour vos repas de famille,
+                vos fêtes et vos événements. Dans le catalogue, vous pouvez comparer
+                les menus par thème, régime alimentaire et nombre de convives.
+            </p>
+        </section>
+
+        <section class="accueil-section" aria-labelledby="avis-clients">
             <h2 id="avis-clients">Les avis de nos clients</h2>
 
-            {% for avis in avisValides %}
-                <article>
-                    <h3>Note de {{ avis.note }} sur 5</h3>
-                    <p>{{ avis.commentaire }}</p>
-                </article>
-            {% else %}
+            {% if avisValides is empty %}
                 <p>Aucun avis publié pour le moment.</p>
-            {% endfor %}
+            {% else %}
+                <div class="accueil-avis">
+                    {% for avis in avisValides %}
+                        <article class="accueil-avis-carte">
+                            <h3>Note de {{ avis.note }} sur 5</h3>
+                            <p>{{ avis.commentaire }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </section>
     </main>
 {% endblock %}
