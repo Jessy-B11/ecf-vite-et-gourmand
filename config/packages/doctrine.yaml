@@ -29,6 +29,8 @@ when@test:
 
 when@prod:
     doctrine:
+        dbal:
+            server_version: "18.6 (Debian 18.6-1.pgdg12+2)"
         orm:
             query_cache_driver:
                 type: pool
