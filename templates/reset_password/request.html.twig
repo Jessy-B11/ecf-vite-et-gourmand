@@ -27,13 +27,13 @@
                 attr: {autocomplete: 'email'}
             }) }}
 
-        <button type="submit">
+        <button class="vg-btn" type="submit">
             Demander un lien de réinitialisation
         </button>
         {{ form_end(requestForm) }}
 
         <p>
-            <a href="{{ path('app_login') }}">
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_login') }}">
                 Revenir à la connexion
             </a>
         </p>

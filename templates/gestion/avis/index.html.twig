@@ -31,7 +31,7 @@
                             name="_token"
                             value="{{ csrf_token('moderer_avis_' ~ avis.id ~ '_' ~ decision) }}"
                         >
-                        <button type="submit">{{ libelle }}</button>
+                        <button class="vg-btn{{ decision == 'refuse' ? ' vg-btn--secondaire' : '' }}" type="submit">{{ libelle }}</button>
                     </form>
                 {% endfor %}
             </article>

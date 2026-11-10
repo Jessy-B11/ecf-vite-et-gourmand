@@ -132,7 +132,7 @@
                         ) }}"
                     >
 
-                    <button type="submit">
+                    <button class="vg-btn" type="submit">
                         Accepter la commande
                     </button>
                 </form>
@@ -199,7 +199,7 @@
                 ) }}"
                     >
 
-                    <button type="submit">
+                    <button class="vg-btn" type="submit">
                         {{ actionSuivi.libelle }}
                     </button>
                 </form>
@@ -244,7 +244,7 @@
                 ) }}"
                     >
 
-                    <button type="submit">
+                    <button class="vg-btn vg-btn--secondaire" type="submit">
                         {{ commande.materielPrete
                     ? 'Retirer le prêt prévu'
                     : 'Prévoir un prêt de matériel' }}
@@ -287,7 +287,7 @@
                 ) }}"
                     >
 
-                    <button type="submit">
+                    <button class="vg-btn" type="submit">
                         Confirmer la restitution et terminer la commande
                     </button>
                 </form>
@@ -299,7 +299,7 @@
     'en_preparation'
 ] %}
             <p>
-                <a
+                <a class="vg-btn vg-btn--secondaire"
                     href="{{ path('app_gestion_commandes_modifier', {
             id: commande.id
         }) }}"
@@ -315,7 +315,7 @@
     'en_preparation'
 ] %}
             <p>
-                <a
+                <a class="vg-btn vg-btn--secondaire"
                     href="{{ path('app_gestion_commandes_annuler', {
             id: commande.id
         }) }}"
@@ -368,7 +368,7 @@
         </section>
 
         <p>
-            <a href="{{ path('app_gestion_commandes') }}">
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes') }}">
                 Revenir à la liste des commandes
             </a>
         </p>

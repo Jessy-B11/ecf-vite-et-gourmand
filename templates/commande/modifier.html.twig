@@ -38,7 +38,7 @@
         {{ form_row(modificationForm.villeLivraison) }}
         {{ form_row(modificationForm.telephoneContact) }}
 
-        <button type="submit">
+        <button class="vg-btn" type="submit">
             Vérifier mes modifications
         </button>
 
@@ -90,7 +90,7 @@
                 <p>Aucune modification n’est encore enregistrée.</p>
 
                 <p>
-                    <a
+                    <a class="vg-btn"
                         href="{{ path(
                         'app_modification_commande_confirmation',
                         {jeton: jeton_confirmation}
@@ -103,7 +103,7 @@
         {% endif %}
 
         <p>
-            <a
+            <a class="vg-btn vg-btn--secondaire"
                 href="{{ path('app_mes_commandes_show', {
                 id: commande.id
             }) }}"

@@ -106,7 +106,7 @@
         </section>
         {% if commande.statut == 'en_attente' %}
             <p>
-                <a
+                <a class="vg-btn vg-btn--secondaire"
                     href="{{ path('app_mes_commandes_modifier', {
             id: commande.id
         }) }}"
@@ -136,7 +136,7 @@
                         ) }}"
                     >
 
-                    <button type="submit">
+                    <button class="vg-btn vg-btn--secondaire" type="submit">
                         Annuler ma commande
                     </button>
                 </form>
@@ -146,13 +146,13 @@
 
         {% if commande.statut == 'terminee' %}
             <p>
-                <a href="{{ path('app_commande_avis', {id: commande.id}) }}">
+                <a class="vg-btn" href="{{ path('app_commande_avis', {id: commande.id}) }}">
                     Laisser un avis
                 </a>
             </p>
         {% endif %}
 
-        <a href="{{ path('app_mes_commandes') }}">
+        <a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes') }}">
             Revenir à mes commandes
         </a>
     </main>

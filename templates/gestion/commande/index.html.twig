@@ -48,9 +48,9 @@
                 >
             </div>
 
-            <button type="submit">Filtrer</button>
+            <button class="vg-btn" type="submit">Filtrer</button>
 
-            <a href="{{ path('app_gestion_commandes') }}">
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes') }}">
                 Réinitialiser les filtres
             </a>
         </form>
@@ -63,7 +63,7 @@
         {% for commande in commandes %}
             <article>
                 <h2>
-                    <a
+                    <a class="vg-btn vg-btn--secondaire"
                         href="{{ path(
                             'app_gestion_commandes_show',
                             {id: commande.id}
@@ -119,7 +119,7 @@
             ) }}"
                         >
 
-                        <button type="submit">
+                        <button class="vg-btn" type="submit">
                             Accepter la commande n°{{ commande.id }}
                         </button>
                     </form>

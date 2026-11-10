@@ -24,7 +24,7 @@
                     {{ form_errors(adresseForm) }}
                     {{ form_row(adresseForm.adresse) }}
 
-                    <button type="submit">
+                    <button class="vg-btn" type="submit">
                         Vérifier l’adresse et calculer le total
                     </button>
                 {{ form_end(adresseForm) }}
@@ -117,7 +117,7 @@
             ) }}"
                         >
 
-                        <button type="submit">
+                        <button class="vg-btn" type="submit">
                             Confirmer et enregistrer
                         </button>
                     </form>
@@ -126,7 +126,7 @@
         {% endif %}
 
         <p>
-            <a
+            <a class="vg-btn vg-btn--secondaire"
                 href="{{ path('app_gestion_commandes_modifier', {
                 id: commande.id
             }) }}"
@@ -136,7 +136,7 @@
         </p>
 
         <p>
-            <a
+            <a class="vg-btn vg-btn--secondaire"
                 href="{{ path('app_gestion_commandes_show', {
                 id: commande.id
             }) }}"

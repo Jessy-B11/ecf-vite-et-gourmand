@@ -17,7 +17,7 @@
         {{ form_errors(confirmationForm) }}
         {{ form_row(confirmationForm.adresse) }}
 
-        <button type="submit">
+        <button class="vg-btn" type="submit">
             Confirmer l’adresse et calculer le total
         </button>
         {{ form_end(confirmationForm) }}
@@ -53,7 +53,7 @@
                         |number_format(2, ',', ' ') }} €
                 </p>
                 <p>
-                    <a
+                    <a class="vg-btn"
                         href="{{ path('app_commande_confirmation', {
             jeton: jeton_confirmation
         }) }}"
@@ -93,7 +93,7 @@
         {% endif %}
 
         <p>
-            <a href="{{ path('app_commande', {id: menu.id}) }}">
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_commande', {id: menu.id}) }}">
                 Recommencer la saisie
             </a>
         </p>

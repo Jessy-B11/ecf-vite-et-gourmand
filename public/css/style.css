@@ -102,8 +102,7 @@ h2 {
     max-width: 440px;
 }
 
-.login-form input,
-.login-form button {
+.login-form input {
     width: 100%;
     padding: 12px;
     font: inherit;
@@ -115,15 +114,10 @@ h2 {
 }
 
 .login-form button {
-    border: none;
-    border-radius: 8px;
-    background-color: var(--bordeaux);
-    color: var(--blanc);
-    cursor: pointer;
+    width: 100%;
 }
 
-.login-form input:focus-visible,
-.login-form button:focus-visible {
+.login-form input:focus-visible {
     outline: 2px solid var(--bordeaux);
     outline-offset: 3px;
 }
@@ -138,8 +132,7 @@ h2 {
     margin-bottom: 6px;
 }
 
-.registration-form input:not([type="checkbox"]),
-.registration-form button {
+.registration-form input:not([type="checkbox"]) {
     width: 100%;
     padding: 12px;
     font: inherit;
@@ -151,18 +144,14 @@ h2 {
 }
 
 .registration-form button {
-    border: none;
-    background-color: var(--bordeaux);
-    color: var(--blanc);
-    cursor: pointer;
+    width: 100%;
 }
 
 .registration-form ul {
     color: var(--bordeaux);
 }
 
-.registration-form input:focus-visible,
-.registration-form button:focus-visible {
+.registration-form input:focus-visible {
     outline: 2px solid var(--bordeaux);
     outline-offset: 3px;
 }
@@ -189,23 +178,7 @@ h2 {
 }
 
 .accueil-bouton {
-    display: inline-block;
     margin-top: 0.75rem;
-    padding: 0.8rem 1.25rem;
-    border-radius: 0.5rem;
-    background-color: #762b40;
-    color: #fff;
-    font-weight: 700;
-    text-decoration: none;
-}
-
-.accueil-bouton:hover {
-    background-color: #592033;
-}
-
-.accueil-bouton:focus-visible {
-    outline: 3px solid #762b40;
-    outline-offset: 4px;
 }
 
 .accueil-photo {
@@ -246,4 +219,41 @@ h2 {
     .accueil-photo {
         order: -1;
     }
+}
+
+.vg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.6rem 1rem;
+    border: 1px solid #7b2d3e;
+    border-radius: 0.5rem;
+    background: #7b2d3e;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.vg-btn:hover {
+    background: #5a1f2d;
+    color: #fff;
+}
+
+.vg-btn--secondaire {
+    background: transparent;
+    color: #7b2d3e;
+}
+
+.vg-btn--secondaire:hover {
+    background: #f5e8ea;
+    color: #5a1f2d;
+}
+
+.vg-btn:focus-visible {
+    outline: 3px solid #7b2d3e;
+    outline-offset: 3px;
 }

@@ -12,7 +12,7 @@
         {{ form_errors(confirmationForm) }}
         {{ form_row(confirmationForm.adresse) }}
 
-        <button type="submit">
+        <button class="vg-btn" type="submit">
             Vérifier l’adresse et recalculer le total
         </button>
         {{ form_end(confirmationForm) }}
@@ -77,7 +77,7 @@
 
                 <p>Aucune modification n’est encore enregistrée.</p>
                 <p>
-                    <a
+                    <a class="vg-btn"
                         href="{{ path(
                         'app_modification_commande_confirmation',
                         {jeton: jeton_confirmation}
@@ -90,7 +90,7 @@
         {% endif %}
 
         <p>
-            <a
+            <a class="vg-btn vg-btn--secondaire"
                 href="{{ path('app_mes_commandes_modifier', {
                 id: commande.id
             }) }}"

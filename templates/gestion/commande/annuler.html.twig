@@ -56,14 +56,14 @@
         {{ form_row(annulationForm.motif) }}
         {{ form_row(annulationForm.clientContacte) }}
 
-        <button type="submit">
+        <button class="vg-btn vg-btn--secondaire" type="submit">
             Confirmer l’annulation de la commande
         </button>
 
         {{ form_end(annulationForm) }}
 
         <p>
-            <a
+            <a class="vg-btn vg-btn--secondaire"
                 href="{{ path('app_gestion_commandes_show', {
                 id: commande.id
             }) }}"

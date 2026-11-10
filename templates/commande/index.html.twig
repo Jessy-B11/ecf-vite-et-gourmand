@@ -42,7 +42,7 @@
         {{ form_row(commandeForm.villeLivraison) }}
         {{ form_row(commandeForm.telephoneContact) }}
 
-        <button type="submit">
+        <button class="vg-btn" type="submit">
             Calculer le prix du menu
         </button>
         {{ form_end(commandeForm) }}
@@ -106,7 +106,7 @@
         {% endif %}
 
         <p>
-            <a href="{{ path('app_menu_show', {id: menu.id}) }}">
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_menu_show', {id: menu.id}) }}">
                 Revenir au menu
             </a>
         </p>

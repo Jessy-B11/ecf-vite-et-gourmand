@@ -42,7 +42,7 @@
                     </strong>
                 </p>
 
-                <a
+                <a class="vg-btn vg-btn--secondaire"
                     href="{{ path('app_mes_commandes_show', {
                         id: commande.id
                     }) }}"
@@ -53,7 +53,7 @@
         {% else %}
             <p>Vous n’avez pas encore passé de commande.</p>
 
-            <a href="{{ path('app_menu') }}">
+            <a class="vg-btn" href="{{ path('app_menu') }}">
                 Découvrir nos menus
             </a>
         {% endfor %}

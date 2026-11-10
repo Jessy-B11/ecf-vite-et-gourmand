@@ -66,14 +66,14 @@
         {{ form_row(modificationForm.motif) }}
         {{ form_row(modificationForm.clientContacte) }}
 
-        <button type="submit">
+        <button class="vg-btn" type="submit">
             Vérifier la saisie
         </button>
 
         {{ form_end(modificationForm) }}
 
         <p>
-            <a
+            <a class="vg-btn vg-btn--secondaire"
                 href="{{ path('app_gestion_commandes_show', {
                 id: commande.id
             }) }}"

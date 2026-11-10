@@ -73,8 +73,8 @@
                     placeholder="Exemple : 6"
                     value="{{ nombre_personnes }}"
                 >
-                <button type="submit">Filtrer</button>
-                <a id="reset-filters" href="{{ path('app_menu') }}">
+                <button class="vg-btn" type="submit">Filtrer</button>
+                <a class="vg-btn vg-btn--secondaire" id="reset-filters" href="{{ path('app_menu') }}">
                     Réinitialiser
                 </a>
             </form>
@@ -121,7 +121,7 @@
                                 {% endif %}
 
                                 <p>
-                                    <a href="{{ path('app_menu_show', {id: menu.id}) }}">
+                                    <a class="vg-btn" href="{{ path('app_menu_show', {id: menu.id}) }}">
                                         Voir le détail
                                     </a>
                                 </p>
