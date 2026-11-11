@@ -48,6 +48,12 @@
                         </a>
                     {% endif %}
 
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('app_admin_employe_creer') }}">
+                            Créer un employé
+                        </a>
+                    {% endif %}
+
                     <a href="{{ path('app_logout') }}">
                         Se déconnecter
                     </a>

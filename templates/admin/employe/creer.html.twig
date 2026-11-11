@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un employé — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container">
+        <h1>Créer un employé</h1>
+
+        {% for message in app.flashes('success') %}
+            <p role="status">{{ message }}</p>
+        {% endfor %}
+
+        {% if employeForm.vars.submitted and not employeForm.vars.valid %}
+            <p class="form-error" role="alert">
+                Le compte employé n’a pas été créé.
+                Corrigez les erreurs indiquées ci-dessous, puis réessayez.
+            </p>
+        {% endif %}
+
+        {{ form_start(employeForm, {
+            attr: {class: 'registration-form'}
+        }) }}
+        {{ form_errors(employeForm) }}
+        {{ form_row(employeForm.prenom) }}
+        {{ form_row(employeForm.nom) }}
+        {{ form_row(employeForm.email) }}
+        {{ form_row(employeForm.plainPassword.first) }}
+        {{ form_row(employeForm.plainPassword.second) }}
+
+        <button class="vg-btn" type="submit">Créer l’employé</button>
+        {{ form_end(employeForm) }}
+
+        <p>
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes') }}">
+                Revenir aux commandes
+            </a>
+        </p>
+    </main>
+{% endblock %}
