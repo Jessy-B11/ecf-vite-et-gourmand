@@ -10,7 +10,8 @@ GET : cette page ne modifie aucune donnée.
 Les statistiques et les options de menus proviennent exclusivement de la collection
 MongoDB `commandes`, via `MONGODB_URI` et `MONGODB_DATABASE`, définies au premier lot.
 PostgreSQL reste utilisé pour l’authentification, pas pour les chiffres du tableau
-de bord. Les données reflètent la dernière exécution de `app:stats:sync` ; ouvrir
+de bord. Les actions sur les commandes actualisent leur document après commit.
+En cas de panne MongoDB, `app:stats:sync` rattrape les écritures manquées ; ouvrir
 la page ne déclenche pas de synchronisation ni d’écriture.
 
 ## Règles affichées

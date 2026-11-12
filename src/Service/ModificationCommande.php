@@ -13,7 +13,8 @@ final class ModificationCommande
     public function __construct(
         private EntityManagerInterface $entityManager,
         private CalculPrixCommande $calculPrixCommande,
-        private CalculFraisLivraison $calculFraisLivraison
+        private CalculFraisLivraison $calculFraisLivraison,
+        private ActualisationStatistiquesCommande $actualisationStatistiques
     ) {
     }
 
@@ -62,7 +63,7 @@ final class ModificationCommande
             );
         }
 
-        return $this->entityManager->wrapInTransaction(
+        $resultat = $this->entityManager->wrapInTransaction(
             function (EntityManagerInterface $em) use (
                 $commande,
                 $utilisateur,
@@ -258,5 +259,9 @@ final class ModificationCommande
                 return true;
             }
         );
+
+        $this->actualisationStatistiques->apresValidation($commande->getId());
+
+        return $resultat;
     }
 }

@@ -34,7 +34,8 @@ final class SuiviCommande
     ];
 
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private ActualisationStatistiquesCommande $actualisationStatistiques
     ) {
     }
 
@@ -62,7 +63,7 @@ final class SuiviCommande
             );
         }
 
-        return $this->entityManager->wrapInTransaction(
+        $resultat = $this->entityManager->wrapInTransaction(
             function (EntityManagerInterface $em) use (
                 $commande,
                 $auteur,
@@ -145,5 +146,9 @@ final class SuiviCommande
                 return true;
             }
         );
+
+        $this->actualisationStatistiques->apresValidation($commande->getId());
+
+        return $resultat;
     }
 }

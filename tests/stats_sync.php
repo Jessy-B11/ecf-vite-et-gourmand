@@ -46,6 +46,7 @@ try {
             date_creation TIMESTAMPTZ, date_prestation DATE, statut TEXT,
             montant_menu_centimes INTEGER, montant_remise_centimes INTEGER,
             frais_livraison_centimes INTEGER, montant_total_centimes INTEGER,
+            version_statistiques BIGINT NOT NULL DEFAULT 1,
             utilisateur_id INTEGER, adresse_livraison TEXT, telephone_contact TEXT, jeton_validation TEXT
         ) ON COMMIT DROP'
     );
@@ -73,7 +74,7 @@ try {
         'La première synchronisation doit créer huit documents.');
     $before = $collection->find([], ['sort' => ['_id' => 1]])->toArray();
     $expectedKeys = ['_id', 'menu', 'nombre_personnes', 'date_creation', 'date_prestation', 'statut',
-        'montant_menu_centimes', 'montant_remise_centimes', 'frais_livraison_centimes', 'montant_total_centimes'];
+        'montant_menu_centimes', 'montant_remise_centimes', 'frais_livraison_centimes', 'montant_total_centimes', 'version_source'];
     foreach ($before as $index => $document) {
         verifier(array_keys($document) === $expectedKeys && $document['_id'] === $index + 1
             && $document['menu'] === ['id' => 42, 'nom' => 'Menu de test']
@@ -95,7 +96,7 @@ try {
         'Une seconde synchronisation doit laisser les documents strictement identiques.');
     echo "OK : seconde synchronisation sans doublon ni modification, même après changement du tarif du menu.\n";
 
-    $connection->executeStatement("UPDATE commande SET statut = 'acceptee' WHERE id = 1");
+    $connection->executeStatement("UPDATE commande SET statut = 'acceptee', version_statistiques = version_statistiques + 1 WHERE id = 1");
     verifier($tester->execute([]) === Command::SUCCESS && $collection->countDocuments() === 8
         && $collection->findOne(['_id' => 1])['statut'] === 'acceptee'
         && str_contains($tester->getDisplay(), '0 document(s) créé(s), 1 modifié(s), 7 inchangé(s)'),

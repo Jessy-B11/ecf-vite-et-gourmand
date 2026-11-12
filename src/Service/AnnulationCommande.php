@@ -11,7 +11,8 @@ use Doctrine\ORM\EntityManagerInterface;
 final class AnnulationCommande
 {
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private ActualisationStatistiquesCommande $actualisationStatistiques
     ) {
     }
 
@@ -32,7 +33,7 @@ final class AnnulationCommande
             );
         }
 
-        return $this->entityManager->wrapInTransaction(
+        $resultat = $this->entityManager->wrapInTransaction(
             function (EntityManagerInterface $em) use (
                 $commande,
                 $utilisateur,
@@ -96,5 +97,9 @@ final class AnnulationCommande
                 return true;
             }
         );
+
+        $this->actualisationStatistiques->apresValidation($commande->getId());
+
+        return $resultat;
     }
 }

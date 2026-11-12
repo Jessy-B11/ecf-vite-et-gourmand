@@ -14,7 +14,8 @@ final class ModificationCommandeEquipe
         private EntityManagerInterface $entityManager,
         private ModificationCommande $modificationCommande,
         private CalculPrixCommande $calculPrixCommande,
-        private CalculFraisLivraison $calculFraisLivraison
+        private CalculFraisLivraison $calculFraisLivraison,
+        private ActualisationStatistiquesCommande $actualisationStatistiques
     ) {
     }
 
@@ -62,7 +63,7 @@ final class ModificationCommandeEquipe
             );
         }
 
-        return $this->entityManager->wrapInTransaction(
+        $resultat = $this->entityManager->wrapInTransaction(
             function (EntityManagerInterface $em) use (
                 $commande,
                 $auteur,
@@ -317,5 +318,9 @@ final class ModificationCommandeEquipe
                 return true;
             }
         );
+
+        $this->actualisationStatistiques->apresValidation($commande->getId());
+
+        return $resultat;
     }
 }

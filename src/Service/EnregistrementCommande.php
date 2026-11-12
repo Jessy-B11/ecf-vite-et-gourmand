@@ -11,7 +11,8 @@ final class EnregistrementCommande
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private CalculPrixCommande $calculPrixCommande
+        private CalculPrixCommande $calculPrixCommande,
+        private ActualisationStatistiquesCommande $actualisationStatistiques
     ) {
     }
 
@@ -35,7 +36,7 @@ final class EnregistrementCommande
             );
         }
 
-        return $this->entityManager->wrapInTransaction(
+        $resultat = $this->entityManager->wrapInTransaction(
             function (EntityManagerInterface $em) use (
                 $commande,
                 $menu,
@@ -174,5 +175,9 @@ final class EnregistrementCommande
                 return $commande;
             }
         );
+
+        $this->actualisationStatistiques->apresValidation($resultat->getId());
+
+        return $resultat;
     }
 }

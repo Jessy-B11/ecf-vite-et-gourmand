@@ -52,6 +52,7 @@ Collection : `commandes` dans la base `MONGODB_DATABASE`.
 | `montant_remise_centimes` | Remise enregistrée sur la commande |
 | `frais_livraison_centimes` | Frais de livraison enregistrés sur la commande |
 | `montant_total_centimes` | Total enregistré sur la commande |
+| `version_source` | Révision PostgreSQL croissante de la commande |
 
 Tous les montants sont des entiers en centimes. Ils proviennent de `commande`,
 jamais d’un recalcul avec `menu.prix_minimum_centimes`. Une modification autorisée
@@ -67,10 +68,17 @@ exporté. La lecture SQL sélectionne uniquement les champs statistiques nécess
 
 ## Comportement
 
-Chaque document est remplacé avec `replaceOne` et `upsert: true`, filtré sur `_id`.
+Chaque document est actualisé avec `updateOne`, une pipeline conditionnelle et
+`upsert: true`, filtré sur `_id`. La comparaison de `version_source` et le remplacement
+sont atomiques : une révision plus ancienne ne peut pas remplacer un état récent.
 Une seconde exécution n’ajoute aucun doublon. Les statuts et montants modifiés
 sont mis à jour, et les anciens champs hors projection sont supprimés du document.
-Les écritures sont acquittées avant de compter un succès.
+Les écritures sont acquittées avant de compter un succès. Les documents de l’ancien
+format sans révision sont mis à niveau lors de leur prochaine synchronisation.
+
+La migration `Version20261112000000` ajoute la révision et son trigger PostgreSQL.
+Les actions sur les commandes synchronisent aussi leur document après commit :
+voir [l’actualisation automatique](statistiques-automatiques.md).
 
 La commande ne modifie jamais PostgreSQL. Elle renvoie 0 en cas de succès et 1
 si MongoDB est inaccessible, si une opération est refusée ou si la lecture SQL

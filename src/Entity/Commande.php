@@ -15,6 +15,13 @@ class Commande
     #[ORM\Column]
     private ?int $id = null;
 
+    // Générée par PostgreSQL, sans modifier les règles métier de concurrence ORM.
+    #[ORM\Column(
+        name: 'version_statistiques', type: Types::BIGINT,
+        insertable: false, updatable: false, generated: 'ALWAYS', options: ['default' => 1]
+    )]
+    private int $versionStatistiques = 1;
+
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(
         name: 'utilisateur_id',

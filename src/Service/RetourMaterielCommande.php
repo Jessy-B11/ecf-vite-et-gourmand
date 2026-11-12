@@ -11,7 +11,8 @@ use Doctrine\ORM\EntityManagerInterface;
 final class RetourMaterielCommande
 {
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private ActualisationStatistiquesCommande $actualisationStatistiques
     ) {
     }
 
@@ -32,7 +33,7 @@ final class RetourMaterielCommande
             );
         }
 
-        return $this->entityManager->wrapInTransaction(
+        $resultat = $this->entityManager->wrapInTransaction(
             function (EntityManagerInterface $em) use (
                 $commande,
                 $auteur,
@@ -109,5 +110,9 @@ final class RetourMaterielCommande
                 return true;
             }
         );
+
+        $this->actualisationStatistiques->apresValidation($commande->getId());
+
+        return $resultat;
     }
 }
