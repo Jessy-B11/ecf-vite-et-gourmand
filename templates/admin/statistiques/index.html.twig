@@ -1,0 +1,138 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container stats">
+        <h1>Statistiques</h1>
+        <p>Les commandes et le chiffre d’affaires de Vite &amp; Gourmand.</p>
+        <p>Les chiffres reflètent la dernière actualisation des statistiques.</p>
+
+        {% if indisponible %}
+            <p class="form-error" role="alert">
+                Les statistiques sont temporairement indisponibles : la base de statistiques est inaccessible.
+                Réessayez plus tard.
+            </p>
+        {% else %}
+            <section class="menu-card stats-section" aria-labelledby="stats-commandes-titre">
+                <h2 id="stats-commandes-titre">Commandes enregistrées par menu</h2>
+                <p>
+                    Tous statuts et toutes dates confondus.
+                    Les filtres ci-dessous s’appliquent uniquement au chiffre d’affaires.
+                </p>
+
+                {% if menus is empty %}
+                    <p>Aucune commande enregistrée dans les statistiques pour le moment.</p>
+                {% else %}
+                    <figure class="stats-chart">
+                        <figcaption>Comparaison du nombre de commandes par menu</figcaption>
+                        <ul>
+                            {% for menu in menus %}
+                                <li>
+                                    <span class="stats-chart-label">{{ menu.nom }}</span>
+                                    <span class="stats-chart-track" aria-hidden="true">
+                                        <span class="stats-chart-bar" style="width: {{ (menu.commandes * 100 / maximumCommandes)|round(2) }}%"></span>
+                                    </span>
+                                    <strong>{{ menu.commandes }}</strong>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </figure>
+
+                    <div class="stats-table-scroll">
+                        <table class="stats-table" id="stats-commandes-tableau">
+                            <caption>Nombre de commandes par menu</caption>
+                            <thead>
+                                <tr><th scope="col">Menu</th><th scope="col">Commandes</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for menu in menus %}
+                                    <tr><th scope="row">{{ menu.nom }}</th><td>{{ menu.commandes }}</td></tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr><th scope="row">Total</th><td>{{ totalCommandes }}</td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="menu-card stats-section" aria-labelledby="stats-ca-titre">
+                <h2 id="stats-ca-titre">Chiffre d’affaires par menu</h2>
+                <p id="stats-ca-regles">
+                    Seules les commandes <strong>terminées</strong> entrent dans le chiffre d’affaires :
+                    montant historique du menu après remise, <strong>hors frais de livraison</strong>.
+                    La période porte sur la <strong>date de création de la commande</strong>,
+                    et non sa date de prestation. Les dates de début et de fin sont incluses,
+                    dans le fuseau <strong>Europe/Paris</strong>.
+                </p>
+
+                {% if erreurs is not empty %}
+                    <div class="form-error" role="alert" id="stats-erreurs">
+                        <p>Corrigez les filtres pour afficher le chiffre d’affaires.</p>
+                        <ul>{% for erreur in erreurs %}<li>{{ erreur }}</li>{% endfor %}</ul>
+                    </div>
+                {% endif %}
+
+                <form class="stats-filters" method="get" action="{{ path('app_admin_statistiques') }}" aria-describedby="stats-ca-regles{% if erreurs is not empty %} stats-erreurs{% endif %}">
+                    <div>
+                        <label for="stats-menu">Menu</label>
+                        <select name="menu" id="stats-menu">
+                            <option value="">Tous les menus</option>
+                            {% for menu in menus %}
+                                <option value="{{ menu.id }}"{% if filtres.menu == menu.id %} selected{% endif %}>{{ menu.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="stats-debut">Date de début</label>
+                        <input type="date" name="debut" id="stats-debut" value="{{ filtres.debut }}">
+                    </div>
+                    <div>
+                        <label for="stats-fin">Date de fin</label>
+                        <input type="date" name="fin" id="stats-fin" value="{{ filtres.fin }}">
+                    </div>
+                    <div class="stats-filter-actions">
+                        <button class="vg-btn" type="submit">Filtrer</button>
+                        <a class="vg-btn vg-btn--secondaire" href="{{ path('app_admin_statistiques') }}">Réinitialiser</a>
+                    </div>
+                </form>
+
+                {% if ca is not null %}
+                    {% if ca.menus is empty %}
+                        <p>Aucune commande terminée ne correspond à ces filtres.</p>
+                    {% endif %}
+                    <div class="stats-table-scroll">
+                        <table class="stats-table" id="stats-ca-tableau">
+                            <caption>Chiffre d’affaires des commandes terminées pour les filtres sélectionnés</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Menu</th>
+                                    <th scope="col">Commandes terminées</th>
+                                    <th scope="col">Chiffre d’affaires hors livraison</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for menu in ca.menus %}
+                                    <tr>
+                                        <th scope="row">{{ menu.nom }}</th>
+                                        <td>{{ menu.commandes }}</td>
+                                        <td>{{ (menu.centimes / 100)|number_format(2, ',', ' ') }} €</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th scope="row">Total</th>
+                                    <td>{{ ca.commandes }}</td>
+                                    <td>{{ (ca.total_centimes / 100)|number_format(2, ',', ' ') }} €</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+    </main>
+{% endblock %}

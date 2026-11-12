@@ -75,7 +75,7 @@ try {
     $expectedAddresses = [
         ['85 cours du Maréchal Juin', '33000', 'Bordeaux'],
         ['5 place Bardineau', '33000', 'Bordeaux'],
-        ['4 rue Raymond Poincaré', '33100', 'Bordeaux'],
+        ['30 rue Gustave Eiffel', '33100', 'Bordeaux'],
         ['2 rue Fieffé', '33800', 'Bordeaux'],
         ['19 place Charles de Gaulle', '33700', 'Mérignac'],
         ['21 rue de Camponac', '33600', 'Pessac'],

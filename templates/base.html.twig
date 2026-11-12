@@ -49,6 +49,10 @@
                     {% endif %}
 
                     {% if is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('app_admin_statistiques') }}">
+                            Statistiques
+                        </a>
+
                         <a href="{{ path('app_admin_employe_creer') }}">
                             Créer un employé
                         </a>

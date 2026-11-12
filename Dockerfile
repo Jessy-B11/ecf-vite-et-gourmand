@@ -3,8 +3,10 @@ FROM php:8.4-apache
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq-dev unzip \
+    && apt-get install -y --no-install-recommends libpq-dev libssl-dev pkg-config unzip \
     && docker-php-ext-install pdo_pgsql \
+    && pecl install --configureoptions='with-mongodb-ssl="openssl"' mongodb-2.5.7 \
+    && docker-php-ext-enable mongodb \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html

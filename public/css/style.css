@@ -257,3 +257,132 @@ h2 {
     outline: 3px solid #7b2d3e;
     outline-offset: 3px;
 }
+
+.stats-section {
+    margin-block: 2rem;
+}
+
+.stats-chart {
+    margin: 1.5rem 0;
+}
+
+.stats-chart figcaption {
+    font-weight: 700;
+}
+
+.stats-chart ul {
+    list-style: none;
+    padding: 0;
+}
+
+.stats-chart li {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1fr) minmax(0, 3fr) minmax(2ch, auto);
+    align-items: center;
+    gap: 1rem;
+    margin-block: 1rem;
+}
+
+.stats-chart-label {
+    overflow-wrap: anywhere;
+}
+
+.stats-chart-track {
+    background: var(--fond);
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.stats-chart-bar {
+    display: block;
+    height: 1.5rem;
+    background: var(--bordeaux);
+}
+
+.stats-table-scroll {
+    overflow-x: auto;
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-block: 1rem;
+}
+
+.stats-table caption {
+    text-align: left;
+    font-weight: 700;
+    padding-bottom: 0.5rem;
+}
+
+.stats-table th,
+.stats-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #ddb9bf;
+    text-align: right;
+}
+
+.stats-table th:first-child {
+    text-align: left;
+}
+
+.stats-table tfoot {
+    font-weight: 700;
+    background: var(--fond);
+}
+
+.stats-filters {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-block: 1.5rem;
+}
+
+.stats-filters label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stats-filters > div {
+    min-width: 0;
+}
+
+.stats-filters input,
+.stats-filters select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #62615b;
+    border-radius: 0.5rem;
+    background: var(--blanc);
+    color: var(--texte);
+    font: inherit;
+}
+
+.stats-filters input:focus-visible,
+.stats-filters select:focus-visible {
+    outline: 3px solid var(--bordeaux);
+    outline-offset: 3px;
+}
+
+.stats-filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+    .stats-chart li {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.5rem;
+    }
+
+    .stats-chart-label {
+        grid-column: 1 / -1;
+    }
+
+    .stats-filters > div {
+        width: 100%;
+    }
+}

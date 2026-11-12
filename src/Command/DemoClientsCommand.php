@@ -21,7 +21,7 @@ final class DemoClientsCommand extends Command
     private const CLIENTS = [
         ['Camille', 'Martin', '85 cours du Maréchal Juin', '33000', 'Bordeaux'],
         ['Alexis', 'Leroux', '5 place Bardineau', '33000', 'Bordeaux'],
-        ['Noémie', 'Rivière', '4 rue Raymond Poincaré', '33100', 'Bordeaux'],
+        ['Noémie', 'Rivière', '30 rue Gustave Eiffel', '33100', 'Bordeaux'],
         ['Hugo', 'Morel', '2 rue Fieffé', '33800', 'Bordeaux'],
         ['Léa', 'Dubois', '19 place Charles de Gaulle', '33700', 'Mérignac'],
         ['Émile', 'Bernard', '21 rue de Camponac', '33600', 'Pessac'],
