@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\Commande;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -15,7 +16,9 @@ final class EmailInvitationAvis
     public function __construct(
         private MailerInterface $mailer,
         private UrlGeneratorInterface $urlGenerator,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        #[Autowire(env: 'MAILER_FROM_EMAIL')]
+        private string $mailerFromEmail
     ) {
     }
 
@@ -41,7 +44,7 @@ final class EmailInvitationAvis
 
         $email = (new Email())
             ->from(new Address(
-                'bonjour@vite-et-gourmand.example',
+                $this->mailerFromEmail,
                 'Vite & Gourmand'
             ))
             ->to($destinataire)

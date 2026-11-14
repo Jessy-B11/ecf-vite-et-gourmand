@@ -1,3 +1,9 @@
 framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
+
+when@prod:
+    framework:
+        mailer:
+            # Envoi direct par HTTPS sur Render : aucun worker Messenger requis.
+            message_bus: false
