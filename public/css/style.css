@@ -567,30 +567,54 @@ h6 {
     max-width: 65ch;
 }
 
+.accueil-menus .menus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.accueil-catalogue-action {
+    margin: 1.5rem 0 0;
+}
+
 .accueil-avis {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
 }
 
 .accueil-avis-carte {
-    padding: 1.25rem;
+    padding: 1rem;
     border: 1px solid #d9c4c8;
     border-radius: 0.75rem;
     background-color: #fff;
     overflow-wrap: anywhere;
 }
 
+.accueil-avis-carte h3 {
+    margin: 0 0 0.5rem;
+    color: var(--bordeaux);
+    font: inherit;
+    font-weight: 700;
+}
+
+.accueil-avis-carte p {
+    margin: 0;
+    color: #62615b;
+    font-size: 0.875rem;
+}
+
 @media (max-width: 700px) {
     .accueil-hero,
-    .accueil-atouts {
+    .accueil-atouts,
+    .accueil-menus .menus-grid,
+    .accueil-avis {
         grid-template-columns: 1fr;
     }
     .accueil-photo {
         order: -1;
     }
 
-    .accueil-bouton {
+    .accueil-bouton,
+    .accueil-catalogue-action .vg-btn {
         width: 100%;
     }
 }

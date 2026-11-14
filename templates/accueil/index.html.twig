@@ -44,8 +44,26 @@
             </ul>
         </section>
 
+        <section class="accueil-section accueil-menus" aria-labelledby="accueil-menus-titre">
+            <h2 id="accueil-menus-titre">Nos menus du moment</h2>
+
+            {% if menusDuMoment is empty %}
+                <p>Aucun menu disponible pour le moment.</p>
+            {% else %}
+                <div class="menus-grid">
+                    {% for menu in menusDuMoment %}
+                        {% include 'menu/_card.html.twig' with {menu: menu, heading_tag: 'h3'} only %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <p class="accueil-catalogue-action">
+                <a class="vg-btn vg-btn--secondaire" href="{{ path('app_menu') }}">Découvrir tous les menus</a>
+            </p>
+        </section>
+
         <section class="accueil-section" aria-labelledby="avis-clients">
-            <h2 id="avis-clients">Les avis de nos clients</h2>
+            <h2 id="avis-clients">Avis clients validés</h2>
 
             {% if avisValides is empty %}
                 <p>Aucun avis publié pour le moment.</p>

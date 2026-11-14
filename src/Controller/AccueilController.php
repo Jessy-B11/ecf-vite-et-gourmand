@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Avis;
+use App\Entity\Menu;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,8 +20,17 @@ final class AccueilController extends AbstractController
             6
         );
 
+        $menusDuMoment = $entityManager->getRepository(Menu::class)->createQueryBuilder('menu')
+            ->andWhere('menu.stockCommandes > 0')
+            ->orderBy('menu.prixMinimumCentimes', 'ASC')
+            ->addOrderBy('menu.id', 'ASC')
+            ->setMaxResults(2)
+            ->getQuery()
+            ->getResult();
+
         return $this->render('accueil/index.html.twig', [
             'avisValides' => $avisValides,
+            'menusDuMoment' => $menusDuMoment,
         ]);
     }
 }
