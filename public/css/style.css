@@ -75,6 +75,76 @@ h6 {
     margin-top: 0;
 }
 
+.catalogue .menus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.menu-card--catalogue {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    overflow-wrap: anywhere;
+}
+
+.menu-card-media {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+.menu-card-placeholder {
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background-color: var(--fond);
+    color: #62615b;
+    text-align: center;
+}
+
+.menu-card--catalogue > p {
+    margin: 0;
+}
+
+.menu-card-meta {
+    color: var(--bordeaux);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.menu-card-title {
+    margin: 0;
+    font-size: 1.5rem;
+    line-height: 1.25;
+}
+
+.menu-card-description,
+.menu-card-unit-price {
+    color: #62615b;
+}
+
+.menu-card-price {
+    color: var(--bordeaux);
+    font-weight: 700;
+}
+
+.menu-card-unit-price,
+.menu-card-availability {
+    font-size: 0.875rem;
+}
+
+.menu-card-action {
+    margin-top: auto;
+}
+
+.menu-results-count {
+    margin: 0 0 16px;
+    font-weight: 700;
+}
+
 .catalogue > h1 {
     margin: 0 0 0.75rem;
     font-size: clamp(2rem, 4vw, 3rem);
@@ -164,7 +234,8 @@ h6 {
 }
 
 @media (max-width: 800px) {
-    .catalogue-layout {
+    .catalogue-layout,
+    .catalogue .menus-grid {
         grid-template-columns: minmax(0, 1fr);
     }
 }

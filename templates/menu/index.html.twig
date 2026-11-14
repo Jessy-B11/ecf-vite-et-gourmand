@@ -102,6 +102,7 @@
             <section class="catalogue-results" aria-label="Résultats du catalogue">
                 <p id="filter-status" role="status" aria-live="polite"></p>
                 <div id="menu-results">
+                    <p class="menu-results-count">{{ menus|length }} {{ menus|length == 1 ? 'menu' : 'menus' }}</p>
                     {% if erreur_filtres %}
                         <p class="form-error" role="alert">
                             {{ erreur_filtres }}
@@ -110,41 +111,7 @@
 
                     <div class="menus-grid">
                         {% for menu in menus %}
-                            <article class="menu-card">
-                                <h2>{{ menu.nom }}</h2>
-                                <p>{{ menu.description }}</p>
-
-                                <p>
-                                    Minimum : {{ menu.minimumPersonnes }} personnes
-                                </p>
-
-                                <p>
-                                    Prix pour ce minimum :
-                                    {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} €
-                                </p>
-
-                                <p>
-                                    Prix par personne :
-                                    {{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} €
-                                </p>
-
-                                <p>
-                                    Thème : {{ menu.theme.libelle }}
-                                    — Régime : {{ menu.regime.libelle }}
-                                </p>
-
-                                {% if menu.stockCommandes > 0 %}
-                                    <p>{{ menu.stockCommandes }} commandes disponibles</p>
-                                {% else %}
-                                    <p>Indisponible</p>
-                                {% endif %}
-
-                                <p>
-                                    <a class="vg-btn" href="{{ path('app_menu_show', {id: menu.id}) }}">
-                                        Voir le détail
-                                    </a>
-                                </p>
-                            </article>
+                            {% include 'menu/_card.html.twig' with {menu: menu} only %}
                         {% else %}
                             {% if not erreur_filtres %}
                                 <p>Aucun menu disponible pour le moment.</p>
