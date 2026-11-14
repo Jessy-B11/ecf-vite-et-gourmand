@@ -1,3 +1,20 @@
+/* Polices variables latines de Google Fonts ; licences OFL dans public/fonts. */
+@font-face {
+    font-family: 'DM Sans';
+    src: url('/fonts/dm-sans/latin-variable.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Playfair Display';
+    src: url('/fonts/playfair-display/latin-variable.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+}
+
 :root {
     --bordeaux: #7b2d3e;
     --bordeaux-fonce: #5a1f2d;
@@ -14,8 +31,15 @@ body {
     margin: 0;
     background-color: var(--fond);
     color: var(--texte);
-    font-family: sans-serif;
+    font-family: 'DM Sans', Arial, sans-serif;
     line-height: 1.6;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
 }
 
 .container {
@@ -25,8 +49,13 @@ body {
 }
 
 h1,
-h2 {
-    color: var(--bordeaux);
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: var(--bordeaux-fonce);
 }
 
 .menus-grid {
@@ -56,27 +85,94 @@ h2 {
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 16px;
-    padding-block: 20px;
+    gap: 16px 24px;
+    padding-block: 16px;
 }
 
-.site-nav a {
-    color: var(--bordeaux);
+.site-nav a:not(.vg-btn) {
+    color: var(--texte);
     text-decoration: none;
 }
 
 .site-brand {
+    font-family: 'Playfair Display', Georgia, serif;
     font-size: 22px;
     font-weight: 700;
 }
 
-.site-nav a:hover {
+.site-nav a.site-brand {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 12px;
+    color: var(--bordeaux-fonce);
+    line-height: 1.2;
+}
+
+.site-brand-emblem {
+    display: block;
+    flex-shrink: 0;
+}
+
+.site-nav-links {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+}
+
+.site-nav-links > a {
+    padding-block: 10px;
+}
+
+.site-nav a[aria-current="page"]:not(.vg-btn) {
+    color: var(--bordeaux);
+    font-weight: 700;
+}
+
+.site-nav a:not(.vg-btn):hover {
+    color: var(--bordeaux);
     text-decoration: underline;
+    text-underline-offset: 0.2em;
 }
 
 .site-nav a:focus-visible {
     outline: 2px solid var(--bordeaux);
     outline-offset: 4px;
+}
+
+.site-nav-toggle[hidden],
+.site-nav-links[hidden] {
+    display: none;
+}
+
+@media (max-width: 1000px) {
+    .site-nav {
+        gap: 16px 12px;
+    }
+
+    .site-nav a.site-brand {
+        gap: 8px;
+        font-size: 20px;
+    }
+
+    .site-brand-emblem {
+        width: 32px;
+        height: 32px;
+    }
+
+    .site-nav-toggle:not([hidden]) {
+        display: inline-flex;
+    }
+
+    .site-nav-links {
+        flex: 0 0 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
 }
 
 .site-footer {

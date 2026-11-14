@@ -12,6 +12,7 @@
 
         {% block javascripts %}
         {% endblock %}
+        <script src="/js/navigation.js" defer></script>
 
         {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
         {% if frankenphp_hot_reload %}
@@ -24,48 +25,60 @@
         <header class="site-header">
             <nav class="container site-nav" aria-label="Navigation principale">
                 <a class="site-brand" href="{{ path('app_accueil') }}">
-                    Vite &amp; Gourmand
+                    <img class="site-brand-emblem" src="/favicon.svg" alt="" width="40" height="40">
+                    <span>Vite &amp; Gourmand</span>
                 </a>
 
-                <a href="{{ path('app_menu') }}">
-                    Nos menus
-                </a>
+                <button class="vg-btn vg-btn--secondaire site-nav-toggle" type="button"
+                        aria-expanded="false" aria-controls="site-nav-links" hidden>
+                    Menu
+                </button>
 
-                {% if app.user %}
-                    {% if is_granted('ROLE_CLIENT') %}
-                        <a href="{{ path('app_profil') }}">
-                            Mon profil
-                        </a>
-
-                        <a href="{{ path('app_mes_commandes') }}">
-                            Mes commandes
-                        </a>
-                    {% endif %}
-
-                    {% if is_granted('ROLE_EMPLOYE') %}
-                        <a href="{{ path('app_gestion_commandes') }}">
-                            Commandes
-                        </a>
-                    {% endif %}
-
-                    {% if is_granted('ROLE_ADMIN') %}
-                        <a href="{{ path('app_admin_statistiques') }}">
-                            Statistiques
-                        </a>
-
-                        <a href="{{ path('app_admin_employe_creer') }}">
-                            Créer un employé
-                        </a>
-                    {% endif %}
-
-                    <a href="{{ path('app_logout') }}">
-                        Se déconnecter
+                <div class="site-nav-links" id="site-nav-links">
+                    <a href="{{ path('app_accueil') }}"{% if app.request.attributes.get('_route') == 'app_accueil' %} aria-current="page"{% endif %}>
+                        Accueil
                     </a>
-                {% else %}
-                    <a href="{{ path('app_login') }}">
-                        Se connecter
+
+                    <a href="{{ path('app_menu') }}"{% if app.request.attributes.get('_route') == 'app_menu' %} aria-current="page"{% endif %}>
+                        Nos menus
                     </a>
-                {% endif %}
+
+                    {% if app.user %}
+                        {% if is_granted('ROLE_CLIENT') %}
+                            <a href="{{ path('app_profil') }}">
+                                Mon profil
+                            </a>
+
+                            <a href="{{ path('app_mes_commandes') }}">
+                                Mes commandes
+                            </a>
+                        {% endif %}
+
+                        {% if is_granted('ROLE_EMPLOYE') %}
+                            <a href="{{ path('app_gestion_commandes') }}">
+                                Commandes
+                            </a>
+                        {% endif %}
+
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('app_admin_statistiques') }}">
+                                Statistiques
+                            </a>
+
+                            <a href="{{ path('app_admin_employe_creer') }}">
+                                Créer un employé
+                            </a>
+                        {% endif %}
+
+                        <a href="{{ path('app_logout') }}">
+                            Se déconnecter
+                        </a>
+                    {% else %}
+                        <a class="vg-btn vg-btn--secondaire" href="{{ path('app_login') }}"{% if app.request.attributes.get('_route') == 'app_login' %} aria-current="page"{% endif %}>
+                            Connexion
+                        </a>
+                    {% endif %}
+                </div>
             </nav>
         </header>
         {% block body %}{% endblock %}
