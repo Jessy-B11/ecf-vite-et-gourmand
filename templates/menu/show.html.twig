@@ -3,89 +3,99 @@
 {% block title %}{{ menu.nom }} — Vite & Gourmand{% endblock %}
 
 {% block body %}
-    <main class="container">
+    <main class="container menu-detail">
         <a class="vg-btn vg-btn--secondaire" href="{{ path('app_menu') }}">Retour aux menus</a>
 
-        <h1>{{ menu.nom }}</h1>
-        <p>{{ menu.description }}</p>
-        {% if menu.images is not empty %}
-            <section aria-labelledby="galerie-title">
+        <div class="menu-detail-overview">
+            <section class="menu-detail-gallery" aria-labelledby="galerie-title">
                 <h2 id="galerie-title">En images</h2>
 
-                <div class="menu-gallery">
-                    {% for image in menu.images %}
-                        <img
-                            src="{{ image.chemin }}"
-                            alt="{{ image.textAlternatif }}"
-                            loading="lazy"
-                            <p
-                        >Illustration générée par IA pour ce menu de démonstration.</p>
-                        >
-                    {% endfor %}
-                </div>
+                {% if menu.images is not empty %}
+                    <div class="menu-gallery">
+                        {% for image in menu.images|sort((a, b) => a.position <=> b.position) %}
+                            <figure>
+                                <img src="{{ image.chemin }}" alt="{{ image.textAlternatif }}" loading="lazy">
+                                <figcaption>Illustration générée par IA pour ce menu de démonstration.</figcaption>
+                            </figure>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="menu-card-media menu-card-placeholder">Photo non disponible</div>
+                {% endif %}
             </section>
-        {% endif %}
-        <p>
-            Minimum : {{ menu.minimumPersonnes }} personnes
-            — Prix :
-            {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} €
-            pour ce minimum
-        </p>
 
-        <p>
-            Prix par personne :
-            {{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} €
-        </p>
+            <section class="menu-card menu-detail-summary" aria-labelledby="menu-title">
+                <p class="menu-card-meta">{{ menu.theme.libelle }} · {{ menu.regime.libelle }}</p>
+                <h1 id="menu-title">{{ menu.nom }}</h1>
+                <p class="menu-card-description">{{ menu.description }}</p>
 
-        <p>
-            Thème : {{ menu.theme.libelle }}
-            — Régime : {{ menu.regime.libelle }}
-        </p>
+                <p class="menu-card-price menu-detail-price">
+                    {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} €
+                    <span>pour {{ menu.minimumPersonnes }} personnes</span>
+                </p>
+                <p class="menu-card-unit-price">
+                    {{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} € / personne
+                </p>
 
-        {% if menu.stockCommandes > 0 %}
-            <p>{{ menu.stockCommandes }} commandes disponibles</p>
-        {% else %}
-            <p>Ce menu est actuellement indisponible à la commande.</p>
-        {% endif %}
+                <dl class="menu-detail-facts">
+                    <div>
+                        <dt>Minimum de convives</dt>
+                        <dd>{{ menu.minimumPersonnes }} personnes</dd>
+                    </div>
+                    <div>
+                        <dt>Disponibilité</dt>
+                        <dd>
+                            {% if menu.stockCommandes > 0 %}
+                                {{ menu.stockCommandes }} commandes disponibles
+                            {% else %}
+                                Indisponible
+                            {% endif %}
+                        </dd>
+                    </div>
+                </dl>
 
-        <section aria-labelledby="conditions-title">
+                {% for message in app.flashes('warning') %}
+                    <p class="form-error" role="alert">{{ message }}</p>
+                {% endfor %}
+
+                {% if menu.stockCommandes > 0 %}
+                    <a class="vg-btn menu-detail-order" href="{{ path('app_commande', {id: menu.id}) }}">
+                        Commander ce menu
+                    </a>
+                {% else %}
+                    <p class="menu-detail-unavailable">Ce menu est actuellement indisponible à la commande.</p>
+                {% endif %}
+            </section>
+        </div>
+
+        <section class="menu-card menu-detail-section" aria-labelledby="conditions-title">
             <h2 id="conditions-title">Conditions de commande</h2>
-            <p>{{ menu.conditions }}</p>
+            <p class="menu-detail-conditions">{{ menu.conditions }}</p>
         </section>
 
-        <section aria-labelledby="plats-title">
+        <section class="menu-detail-section" aria-labelledby="plats-title">
             <h2 id="plats-title">Composition du menu</h2>
 
-            {% for plat in menu.plats %}
-                <article class="menu-card">
-                    <h3>{{ plat.nom }}</h3>
-                    <p>{{ plat.description }}</p>
-
-                    <p>
-                        Allergènes :
-                        {% for allergene in plat.allergenes %}
-                            {{ allergene.libelle }}{% if not loop.last %}, {% endif %}
-                        {% else %}
-                            aucun allergène renseigné
-                        {% endfor %}
-                    </p>
-                </article>
+            {% if menu.plats is not empty %}
+                <div class="menus-grid menu-detail-composition">
+                    {% for plat in menu.plats %}
+                        <article class="menu-card menu-detail-dish">
+                            <h3>{{ plat.nom }}</h3>
+                            <p>{{ plat.description }}</p>
+                            <p class="menu-detail-allergens">
+                                <strong>Allergènes :</strong>
+                                {% for allergene in plat.allergenes %}
+                                    {{ allergene.libelle }}{% if not loop.last %}, {% endif %}
+                                {% else %}
+                                    aucun allergène renseigné
+                                {% endfor %}
+                            </p>
+                        </article>
+                    {% endfor %}
+                </div>
             {% else %}
                 <p>La composition sera prochainement renseignée.</p>
-            {% endfor %}
+            {% endif %}
         </section>
-        {% for message in app.flashes('warning') %}
-            <p role="alert">{{ message }}</p>
-        {% endfor %}
-
-        {% if menu.stockCommandes > 0 %}
-            <p>
-                <a class="vg-btn" href="{{ path('app_commande', {id: menu.id}) }}">
-                    Commander ce menu
-                </a>
-            </p>
-        {% else %}
-            <p>Ce menu est actuellement indisponible.</p>
-        {% endif %}
     </main>
 {% endblock %}
