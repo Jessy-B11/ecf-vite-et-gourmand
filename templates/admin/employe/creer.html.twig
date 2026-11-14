@@ -10,6 +10,10 @@
             <p role="status">{{ message }}</p>
         {% endfor %}
 
+        {% for message in app.flashes('warning') %}
+            <p class="form-error" role="alert">{{ message }}</p>
+        {% endfor %}
+
         {% if employeForm.vars.submitted and not employeForm.vars.valid %}
             <p class="form-error" role="alert">
                 Le compte employé n’a pas été créé.

@@ -43,8 +43,9 @@ build de l’image embarquera le client HTTP et le bridge Brevo depuis le lock m
 
 L’adresse From est injectée depuis `MAILER_FROM_EMAIL` dans les quatre services
 `EmailBienvenue`, `EmailConfirmationCommande`, `EmailInvitationAvis` et
-`EmailRetourMateriel`, ainsi que dans `ResetPasswordController` pour le reset.
-Le nom d’expéditeur reste **Vite & Gourmand** dans les cinq cas.
+`EmailRetourMateriel`, ainsi que dans `EmailCreationEmploye` et dans
+`ResetPasswordController` pour le reset. Le nom d’expéditeur reste
+**Vite & Gourmand** dans les six cas.
 
 Messenger n’est pas installé dans les dépendances du projet. Aucune configuration
 de transport Messenger, de routage de `SendEmailMessage` ou de worker Render n’est
@@ -56,10 +57,26 @@ même si Messenger est ajouté ultérieurement pour un autre usage.
 Les comportements existants de gestion des erreurs d’envoi sont conservés. Cette
 configuration n’ajoute pas de file persistante ni de mécanisme de réessai.
 
+### Notification de création d’un employé
+
+Après l’enregistrement réussi du compte par le gérant, `AdminEmployeController`
+appelle `EmailCreationEmploye`. Le message est adressé à l’e-mail du nouveau compte,
+contient le lien de connexion à son espace et l’invite à demander son mot de passe
+initial au gérant. Le service ne reçoit jamais le mot de passe initial et n’inclut
+ni celui-ci ni son hachage dans le message.
+
+Le Mailer est résolu à la demande pour que sa configuration et l’envoi soient
+évalués après l’enregistrement. Si la notification échoue, le compte reste créé,
+la redirection habituelle est conservée et le gérant voit un avertissement distinct.
+Le journal contient seulement l’identifiant utilisateur et la classe de l’erreur,
+sans URI ni message brut du transport. Une adresse déjà utilisée ou un formulaire
+invalide ne déclenche aucune notification.
+
 ## Vérifications
 
 ```powershell
 php tests/emails_transactionnels.php
+php tests/creation_employe.php
 php bin/console lint:yaml config
 php bin/console lint:container
 php bin/console lint:container --env=prod --no-debug
@@ -83,6 +100,13 @@ avec une adresse distincte de l’exemple local, puis simule une réponse Brevo 
 contrôle le POST HTTPS, l’authentification et le contenu expéditeur/destinataire.
 Il vérifie aussi que le DSN Mailpit sélectionne toujours le transport SMTP.
 Aucun message n’est envoyé sur Internet ou à Mailpit par ce test.
+
+`tests/creation_employe.php` contrôle en plus la notification employé avec un vrai
+Mailer relié à un transport de test. Il vérifie le destinataire, le From configuré,
+le contenu sans mot de passe ni hachage, la visibilité du compte depuis une autre
+connexion avant envoi, l’absence de notification sur refus et doublon, ainsi que
+la conservation du compte et l’avertissement après une panne ou un DSN invalide.
+Il ne crée aucun compte dans la base de travail et n’effectue aucun envoi réel.
 
 Après configuration et déploiement sur Render, il reste à réaliser un envoi réel
 vers une boîte de test autorisée, puis à vérifier la réception, l’expéditeur et les

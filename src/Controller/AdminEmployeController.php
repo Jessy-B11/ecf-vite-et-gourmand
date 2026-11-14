@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Utilisateur;
 use App\Form\EmployeType;
+use App\Service\EmailCreationEmploye;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +27,9 @@ final class AdminEmployeController extends AbstractController
     public function creer(
         Request $request,
         EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $userPasswordHasher
+        UserPasswordHasherInterface $userPasswordHasher,
+        EmailCreationEmploye $emailCreationEmploye,
+        LoggerInterface $logger
     ): Response {
         $gerant = $this->getUser();
 
@@ -59,6 +63,20 @@ final class AdminEmployeController extends AbstractController
 
             if ($form->isValid()) {
                 $this->addFlash('success', 'Le compte employé a bien été créé.');
+
+                try {
+                    $emailCreationEmploye->envoyer($employe);
+                } catch (\Throwable $exception) {
+                    // Le compte est déjà enregistré. Ne pas journaliser de secret du transport.
+                    $logger->error('Échec de la notification de création du compte employé.', [
+                        'utilisateur_id' => $employe->getId(),
+                        'type_erreur' => $exception::class,
+                    ]);
+                    $this->addFlash(
+                        'warning',
+                        'Le compte est créé, mais l’e-mail de notification n’a pas pu être envoyé. Informez l’employé de la création de son compte.'
+                    );
+                }
 
                 return $this->redirectToRoute(
                     'app_admin_employe_creer',

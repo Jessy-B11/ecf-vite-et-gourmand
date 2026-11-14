@@ -6,11 +6,16 @@
 
 use App\Entity\Utilisateur;
 use App\Kernel;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportException;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\SentMessage;
+use Symfony\Component\Mailer\Transport\AbstractTransport;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -22,9 +27,44 @@ function verifier(bool $condition, string $message): void
     }
 }
 
+final class TransportNotificationEmployeTest extends AbstractTransport
+{
+    public array $messages = [];
+    public bool $echouer = false;
+    public bool $injecter = true;
+    public int $tentatives = 0;
+    public ?Closure $avantEnvoi = null;
+
+    public function __toString(): string
+    {
+        return 'test://notification-employe';
+    }
+
+    protected function doSend(SentMessage $message): void
+    {
+        ++$this->tentatives;
+        ($this->avantEnvoi)($message);
+        if ($this->echouer) {
+            throw new TransportException('Échec simulé avec un secret-test à ne pas afficher.');
+        }
+        $this->messages[] = $message->getOriginalMessage();
+    }
+}
+
+function transportNotification(): TransportNotificationEmployeTest
+{
+    static $transport;
+
+    return $transport ??= new TransportNotificationEmployeTest();
+}
+
 function requete(array &$cookies, string $method, string $path, array $data = []): Response
 {
-    $kernel = new Kernel('test', false);
+    $kernel = new Kernel('test', true);
+    $kernel->boot();
+    if (transportNotification()->injecter) {
+        $kernel->getContainer()->get('test.service_container')->set('mailer.mailer', new Mailer(transportNotification()));
+    }
     $request = Request::create('http://localhost' . $path, $method, $data, $cookies, [], [
         'HTTP_ORIGIN' => 'http://localhost',
     ]);
@@ -96,6 +136,10 @@ function soumettre(array &$cookies, array $overrides = []): Response
 }
 
 $_SERVER['APP_ENV'] = $_ENV['APP_ENV'] = 'test';
+$_SERVER['MAILER_DSN'] = $_ENV['MAILER_DSN'] = 'null://null';
+$_SERVER['MAILER_FROM_EMAIL'] = $_ENV['MAILER_FROM_EMAIL'] = 'notification-test@example.test';
+putenv('MAILER_DSN=null://null');
+putenv('MAILER_FROM_EMAIL=notification-test@example.test');
 (new Dotenv())->bootEnv(dirname(__DIR__) . '/.env');
 $database = tempnam(sys_get_temp_dir(), 'vg-employe-');
 verifier($database !== false, 'Impossible de créer la base temporaire.');
@@ -103,7 +147,7 @@ $databaseUrl = 'sqlite:///' . str_replace('\\', '/', $database);
 putenv('DATABASE_URL=' . $databaseUrl);
 $_SERVER['DATABASE_URL'] = $_ENV['DATABASE_URL'] = $databaseUrl;
 
-$kernel = new Kernel('test', false);
+$kernel = new Kernel('test', true);
 $entityManager = null;
 
 try {
@@ -127,6 +171,16 @@ try {
         $entityManager->persist($user);
     }
     $entityManager->flush();
+    transportNotification()->avantEnvoi = function (SentMessage $message) use ($connection): void {
+        $lecteur = DriverManager::getConnection($connection->getParams());
+        try {
+            $email = $message->getOriginalMessage();
+            verifier($lecteur->fetchOne('SELECT id FROM utilisateur WHERE email = ?', [$email->getTo()[0]->getAddress()]) !== false,
+                'Le compte doit être visible depuis une autre connexion avant l’envoi.');
+        } finally {
+            $lecteur->close();
+        }
+    };
 
     $anonymous = [];
     foreach (['GET', 'POST'] as $method) {
@@ -188,6 +242,7 @@ try {
     verifier(str_contains($duplicate->getContent(), 'Un compte existe déjà avec cette adresse email.')
         && (int) $connection->fetchOne('SELECT COUNT(*) FROM utilisateur') === 3,
         'Un email déjà utilisé par un client doit afficher une erreur sans créer de compte.');
+    verifier(transportNotification()->tentatives === 0, 'Aucune notification pour un refus d’accès, un formulaire invalide ou un email existant.');
 
     $created = soumettre($admin);
     verifier($created->getStatusCode() === 303
@@ -199,22 +254,63 @@ try {
         && $employee->isActif() && $employee->getPrenom() === 'Camille' && $employee->getNom() === 'Martin'
         && $employee->getPassword() !== 'InitialValide42!' && $hasher->isPasswordValid($employee, 'InitialValide42!'),
         'Le nouveau compte actif doit avoir le rôle employé et un mot de passe correctement haché.');
+    verifier(count(transportNotification()->messages) === 1, 'La création doit envoyer exactement une notification.');
+    $notification = transportNotification()->messages[0];
+    verifier($notification->getTo()[0]->getAddress() === 'nouvel-employe@example.test'
+        && $notification->getFrom()[0]->getAddress() === 'notification-test@example.test'
+        && $notification->getFrom()[0]->getName() === 'Vite & Gourmand', 'Le destinataire et l’expéditeur configuré doivent être corrects.');
+    verifier(str_contains($notification->getTextBody(), 'espace employé')
+        && str_contains($notification->getTextBody(), 'demandez votre mot de passe initial au gérant')
+        && str_contains($notification->getTextBody(), 'http://localhost/login'), 'La notification doit expliquer comment accéder à son espace et obtenir le mot de passe initial.');
+    verifier(!str_contains($notification->toString(), 'InitialValide42!')
+        && !str_contains($notification->toString(), $employee->getPassword()), 'Ni mot de passe initial ni hachage ne doit figurer dans l’e-mail.');
     $confirmation = requete($admin, 'GET', '/admin/employes/creer');
     verifier($confirmation->getStatusCode() === 200
         && str_contains($confirmation->getContent(), 'Le compte employé a bien été créé.'),
         'Le gérant doit rester connecté et voir la confirmation après redirection.');
     echo "OK : création par le gérant, rôle employé imposé, hachage, redirection et confirmation.\n";
+    echo "OK : notification après enregistrement, bon destinataire, From configuré et aucun mot de passe dans l’e-mail.\n";
 
     $duplicate = soumettre($admin);
     verifier(str_contains($duplicate->getContent(), 'Un compte existe déjà avec cette adresse email.')
         && (int) $connection->fetchOne('SELECT COUNT(*) FROM utilisateur') === 4,
         'Une seconde création avec le même email employé doit être refusée.');
+    verifier(transportNotification()->tentatives === 1, 'Un renvoi avec le même email ne doit pas réexpédier de notification.');
     echo "OK : email en double refusé pour un client existant et un employé existant.\n";
 
     $employeeCookies = connexion('nouvel-employe@example.test', 'InitialValide42!');
     verifier(requete($employeeCookies, 'GET', '/admin/employes/creer')->getStatusCode() === 403,
         'Le nouvel employé peut se connecter mais ne peut pas créer un autre employé.');
     echo "OK : connexion du nouvel employé et refus de la création de comptes.\n";
+
+    transportNotification()->echouer = true;
+    $failed = soumettre($admin, ['email' => 'echec-envoi@example.test']);
+    verifier($failed->getStatusCode() === 303, 'Une panne d’envoi doit conserver la redirection, sans erreur 500.');
+    $entityManager->clear();
+    $conserve = $entityManager->getRepository(Utilisateur::class)->findOneBy(['email' => 'echec-envoi@example.test']);
+    verifier($conserve instanceof Utilisateur && $hasher->isPasswordValid($conserve, 'InitialValide42!')
+        && in_array('ROLE_EMPLOYE', $conserve->getRoles(), true), 'Le compte doit rester enregistré malgré la panne d’envoi.');
+    $warning = requete($admin, 'GET', '/admin/employes/creer');
+    verifier($warning->getStatusCode() === 200
+        && str_contains($warning->getContent(), 'Le compte employé a bien été créé.')
+        && str_contains($warning->getContent(), 'l’e-mail de notification n’a pas pu être envoyé.')
+        && !str_contains($warning->getContent(), 'secret-test'), 'Le gérant doit voir le succès de création et un avertissement sans détail technique sensible.');
+    verifier(transportNotification()->tentatives === 2 && count(transportNotification()->messages) === 1,
+        'La panne ne doit pas provoquer d’autre tentative pendant la redirection.');
+    echo "OK : panne du transport, compte et mot de passe haché conservés, avertissement affiché et aucune erreur 500.\n";
+
+    // Une mauvaise configuration ne doit pas initialiser le transport avant la création du compte.
+    transportNotification()->injecter = false;
+    $_SERVER['MAILER_DSN'] = $_ENV['MAILER_DSN'] = 'dsn-sans-schema';
+    putenv('MAILER_DSN=dsn-sans-schema');
+    $invalidDsn = soumettre($admin, ['email' => 'echec-configuration@example.test']);
+    verifier($invalidDsn->getStatusCode() === 303
+        && $connection->fetchOne('SELECT id FROM utilisateur WHERE email = ?', ['echec-configuration@example.test']) !== false,
+        'Une erreur de configuration du transport doit aussi laisser le compte créé.');
+    $warning = requete($admin, 'GET', '/admin/employes/creer');
+    verifier($warning->getStatusCode() === 200 && str_contains($warning->getContent(), 'l’e-mail de notification n’a pas pu être envoyé.'),
+        'Un DSN invalide doit produire le même avertissement après création.');
+    echo "OK : transport résolu après l’enregistrement, même avec un DSN invalide.\n";
 } finally {
     $entityManager?->getConnection()->close();
     $kernel->shutdown();
