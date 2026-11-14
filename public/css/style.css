@@ -75,6 +75,100 @@ h6 {
     margin-top: 0;
 }
 
+.catalogue > h1 {
+    margin: 0 0 0.75rem;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.2;
+}
+
+.catalogue-introduction {
+    margin: 0 0 1.5rem;
+    color: #62615b;
+}
+
+.catalogue-layout {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
+}
+
+.catalogue-filters {
+    padding: 16px;
+    border: 1px solid #ddb9bf;
+    border-radius: 12px;
+    background-color: var(--blanc);
+}
+
+.catalogue-filters h2 {
+    margin: 0 0 1rem;
+    font-size: 1.5rem;
+    line-height: 1.2;
+}
+
+.catalogue-filters form {
+    display: grid;
+    gap: 16px;
+}
+
+.catalogue-field {
+    display: grid;
+    gap: 6px;
+}
+
+.catalogue-field label {
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.catalogue-field input,
+.catalogue-field select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.6rem;
+    border: 1px solid #ddb9bf;
+    border-radius: 8px;
+    background-color: var(--blanc);
+    color: var(--texte);
+    font: inherit;
+}
+
+.catalogue-field input:focus-visible,
+.catalogue-field select:focus-visible {
+    outline: 2px solid var(--bordeaux);
+    outline-offset: 3px;
+}
+
+.catalogue-filter-actions {
+    display: grid;
+    gap: 8px;
+}
+
+.catalogue-note {
+    margin: 0;
+    color: #62615b;
+    font-size: 0.875rem;
+}
+
+.catalogue-results {
+    min-width: 0;
+}
+
+.catalogue-results #filter-status {
+    margin: 0;
+}
+
+.catalogue-results #filter-status:not(:empty) {
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 800px) {
+    .catalogue-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 .site-header {
     background-color: var(--blanc);
     border-bottom: 1px solid #ddb9bf;
