@@ -28,11 +28,25 @@
 }
 
 body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
     background-color: var(--fond);
     color: var(--texte);
     font-family: 'DM Sans', Arial, sans-serif;
     line-height: 1.6;
+}
+
+.site-content {
+    flex: 1 0 auto;
+    min-width: 0;
+}
+
+body > .site-header,
+body > .site-footer {
+    flex-shrink: 0;
 }
 
 button,
@@ -654,6 +668,13 @@ h6 {
 
 .accueil-presentation > p {
     margin: 0 0 1rem;
+    max-width: 65ch;
+}
+
+.accueil .accueil-introduction,
+.accueil .accueil-presentation > p {
+    font-size: 1.25rem;
+    line-height: 1.7;
 }
 
 .accueil-introduction,
@@ -734,6 +755,11 @@ h6 {
 }
 
 @media (max-width: 700px) {
+    .accueil .accueil-introduction,
+    .accueil .accueil-presentation > p {
+        font-size: 1.125rem;
+    }
+
     .accueil-hero,
     .accueil-atouts,
     .accueil-menus .menus-grid,

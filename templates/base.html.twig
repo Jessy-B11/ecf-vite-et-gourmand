@@ -81,7 +81,9 @@
                 </div>
             </nav>
         </header>
-        {% block body %}{% endblock %}
+        <div class="site-content">
+            {% block body %}{% endblock %}
+        </div>
         {% include 'partials/footer.html.twig' %}
     </body>
 </html>
