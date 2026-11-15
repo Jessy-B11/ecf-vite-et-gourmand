@@ -559,6 +559,41 @@ h6 {
     background-color: #f5e8ea;
     border-left: 4px solid #7b2d3e;
 }
+.login-card {
+    max-width: 480px;
+    margin-inline: auto;
+    overflow-wrap: anywhere;
+}
+
+.login-card h1 {
+    margin: 0 0 24px;
+    font-size: clamp(1.75rem, 3vw, 2rem);
+    line-height: 1.2;
+    text-align: center;
+}
+
+.login-alternatives {
+    display: grid;
+    gap: 12px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.login-alternatives p {
+    margin: 0;
+}
+
+.login-alternatives > a:not(.vg-btn) {
+    padding-block: 4px;
+    color: var(--bordeaux);
+    text-underline-offset: 0.2em;
+}
+
+.login-alternatives > a:not(.vg-btn):focus-visible {
+    outline: 2px solid var(--bordeaux);
+    outline-offset: 3px;
+}
+
 .login-form {
     display: grid;
     gap: 12px;
@@ -584,6 +619,29 @@ h6 {
     outline: 2px solid var(--bordeaux);
     outline-offset: 3px;
 }
+.reset-password-page .login-form ul {
+    margin-block: 6px 10px;
+    padding-left: 20px;
+    color: var(--bordeaux);
+}
+
+.reset-password-page .login-form .help-text {
+    margin-top: 6px;
+    color: #62615b;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.reset-password-page .login-card p > a:not(.vg-btn) {
+    color: var(--bordeaux);
+    text-underline-offset: 0.2em;
+}
+
+.reset-password-page .login-card p > a:not(.vg-btn):focus-visible {
+    outline: 2px solid var(--bordeaux);
+    outline-offset: 3px;
+}
+
 .registration-form {
     display: grid;
     gap: 20px;
@@ -617,6 +675,107 @@ h6 {
 .registration-form input:focus-visible {
     outline: 2px solid var(--bordeaux);
     outline-offset: 3px;
+}
+
+.registration-card {
+    max-width: 880px;
+    margin-inline: auto;
+    overflow-wrap: anywhere;
+}
+
+.registration-card h1 {
+    margin: 0 0 24px;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.2;
+}
+
+.registration-form.registration-grouped {
+    max-width: none;
+    gap: 24px;
+}
+
+.registration-group {
+    min-width: 0;
+    margin: 0;
+    padding: 0 0 24px;
+    border: 0;
+    border-bottom: 1px solid #ddb9bf;
+}
+
+.registration-group:last-of-type {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.registration-group legend {
+    margin-bottom: 16px;
+    padding: 0;
+    color: var(--bordeaux-fonce);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.registration-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.registration-grid > div {
+    min-width: 0;
+}
+
+.registration-wide {
+    grid-column: 1 / -1;
+}
+
+.registration-grouped .help-text {
+    margin-top: 6px;
+    color: #62615b;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.registration-grouped ul {
+    margin-block: 6px 10px;
+    padding-left: 20px;
+}
+
+.registration-terms > div {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: start;
+    gap: 0 12px;
+}
+
+.registration-terms label {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 44px;
+    margin: 0;
+    padding-block: 8px;
+    cursor: pointer;
+}
+
+.registration-terms input[type="checkbox"] {
+    grid-column: 1;
+    grid-row: 1;
+    width: 20px;
+    height: 20px;
+    margin: 12px 0 0;
+    accent-color: var(--bordeaux);
+}
+
+.registration-terms ul {
+    grid-column: 1 / -1;
+    grid-row: 2;
+}
+
+@media (max-width: 700px) {
+    .registration-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 .commande-page > h1 {

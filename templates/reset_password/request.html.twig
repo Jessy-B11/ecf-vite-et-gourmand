@@ -3,39 +3,41 @@
 {% block title %}Mot de passe oublié — Vite & Gourmand{% endblock %}
 
 {% block body %}
-    <main class="container">
-        <h1>Mot de passe oublié</h1>
+    <main class="container login-page reset-password-page">
+        <section class="menu-card login-card" aria-labelledby="reset-request-title">
+            <h1 id="reset-request-title">Mot de passe oublié</h1>
 
-        {% for flash_error in app.flashes('reset_password_error') %}
-            <p class="form-error" role="alert">
-                Ce lien est invalide ou a expiré. Veuillez demander un nouveau lien.
+            {% for flash_error in app.flashes('reset_password_error') %}
+                <p class="form-error" role="alert">
+                    Ce lien est invalide ou a expiré. Veuillez demander un nouveau lien.
+                </p>
+            {% endfor %}
+
+            <p>
+                Saisissez l’adresse email associée à votre compte
+                pour demander un lien de réinitialisation.
             </p>
-        {% endfor %}
 
-        <p>
-            Saisissez l’adresse email associée à votre compte
-            pour demander un lien de réinitialisation.
-        </p>
-
-        {{ form_start(requestForm, {
-            attr: {class: 'login-form'}
-        }) }}
-        {{ form_errors(requestForm) }}
-
-        {{ form_row(requestForm.email, {
-                label: 'Adresse email',
-                attr: {autocomplete: 'email'}
+            {{ form_start(requestForm, {
+                attr: requestForm.vars.attr|merge({class: (requestForm.vars.attr.class|default('') ~ ' login-form')|trim})
             }) }}
+            {{ form_errors(requestForm) }}
 
-        <button class="vg-btn" type="submit">
-            Demander un lien de réinitialisation
-        </button>
-        {{ form_end(requestForm) }}
+            {{ form_row(requestForm.email, {
+                    label: 'Adresse email',
+                    attr: {autocomplete: 'email'}
+                }) }}
 
-        <p>
-            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_login') }}">
-                Revenir à la connexion
-            </a>
-        </p>
+            <button class="vg-btn" type="submit">
+                Demander un lien de réinitialisation
+            </button>
+            {{ form_end(requestForm) }}
+
+            <p class="login-alternatives">
+                <a class="vg-btn vg-btn--secondaire" href="{{ path('app_login') }}">
+                    Revenir à la connexion
+                </a>
+            </p>
+        </section>
     </main>
 {% endblock %}
