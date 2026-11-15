@@ -888,6 +888,21 @@ h6 {
     outline-offset: 3px;
 }
 
+.avis-page {
+    max-width: 760px;
+}
+
+.avis-page h1 {
+    margin-bottom: 12px;
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+}
+
+.avis-page textarea {
+    height: 140px;
+    min-height: 140px;
+    resize: vertical;
+}
+
 .commande-page .commande-summary h2,
 .commande-summary > p {
     margin: 0;
