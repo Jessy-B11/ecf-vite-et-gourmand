@@ -1035,6 +1035,66 @@ h6 {
     flex: 1 1 12rem;
 }
 
+.commandes-list {
+    display: grid;
+    gap: 16px;
+}
+
+.commandes-card-heading,
+.commandes-card-details {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.commandes-card-heading {
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.commandes-card-heading p {
+    margin: 0;
+}
+
+.commandes-status {
+    padding: 4px 12px;
+    border-radius: 8px;
+    background-color: #f5e8ea;
+    color: var(--bordeaux-fonce);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.commandes-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto auto;
+    flex: 1;
+    gap: 16px;
+    min-width: 0;
+    margin: 0;
+}
+
+.commandes-meta dt {
+    color: #62615b;
+    font-size: 0.875rem;
+}
+
+.commandes-meta dd {
+    margin: 4px 0 0;
+}
+
+@media (max-width: 900px) {
+    .commandes-card-details {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .commandes-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 .accueil-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

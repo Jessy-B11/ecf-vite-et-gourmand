@@ -3,48 +3,61 @@
 {% block title %}Mon profil — Vite & Gourmand{% endblock %}
 
 {% block body %}
-    <main class="container">
-        <h1>Mon profil</h1>
+    <main class="container profil-page">
+        <section class="menu-card registration-card" aria-labelledby="profil-title">
+            <h1 id="profil-title">Mon profil</h1>
 
-        <p>
-            Adresse email : <strong>{{ email }}</strong>
-        </p>
-
-        <p>
-            Ces coordonnées serviront au préremplissage de vos
-            prochaines commandes. Les commandes déjà enregistrées
-            conservent leurs propres coordonnées.
-        </p>
-
-        {% if profilForm.vars.submitted
-            and not profilForm.vars.valid %}
-            <p class="form-error" role="alert">
-                Veuillez corriger les erreurs du formulaire.
+            <p>
+                Ces coordonnées serviront au préremplissage de vos
+                prochaines commandes. Les commandes déjà enregistrées
+                conservent leurs propres coordonnées.
             </p>
-        {% endif %}
 
-        {{ form_start(profilForm, {
-            attr: {class: 'registration-form'}
-        }) }}
+            {% for message in app.flashes('success') %}
+                <p class="menu-card-meta" role="status">{{ message }}</p>
+            {% endfor %}
 
-        {{ form_errors(profilForm) }}
-        {{ form_row(profilForm.nom) }}
-        {{ form_row(profilForm.prenom) }}
-        {{ form_row(profilForm.telephone) }}
-        {{ form_row(profilForm.adresse) }}
-        {{ form_row(profilForm.codePostal) }}
-        {{ form_row(profilForm.ville) }}
+            {% if profilForm.vars.submitted and not profilForm.vars.valid %}
+                <p class="form-error" role="alert">Veuillez corriger les erreurs du formulaire.</p>
+            {% endif %}
 
-        <button class="vg-btn" type="submit">
-            Enregistrer mon profil
-        </button>
+            {{ form_start(profilForm, {
+                attr: profilForm.vars.attr|merge({class: (profilForm.vars.attr.class|default('') ~ ' registration-form registration-grouped')|trim})
+            }) }}
+            {{ form_errors(profilForm) }}
 
-        {{ form_end(profilForm) }}
+            <fieldset class="registration-group">
+                <legend>Identité</legend>
+                <div class="registration-grid">
+                    {{ form_row(profilForm.nom) }}
+                    {{ form_row(profilForm.prenom) }}
+                </div>
+            </fieldset>
 
-        <p>
-            <a href="{{ path('app_mes_commandes') }}">
-                Consulter mes commandes
-            </a>
-        </p>
+            <fieldset class="registration-group">
+                <legend>Coordonnées</legend>
+                <div class="registration-grid">
+                    <dl class="commande-account">
+                        <dt>Adresse email</dt>
+                        <dd><strong>{{ email }}</strong></dd>
+                    </dl>
+                    {{ form_row(profilForm.telephone) }}
+                </div>
+            </fieldset>
+
+            <fieldset class="registration-group">
+                <legend>Adresse</legend>
+                <div class="registration-grid">
+                    <div class="registration-wide">{{ form_row(profilForm.adresse) }}</div>
+                    {{ form_row(profilForm.codePostal) }}
+                    {{ form_row(profilForm.ville) }}
+                </div>
+            </fieldset>
+
+            <button class="vg-btn" type="submit">Enregistrer mon profil</button>
+            {{ form_end(profilForm) }}
+
+            <p><a href="{{ path('app_mes_commandes') }}">Consulter mes commandes</a></p>
+        </section>
     </main>
 {% endblock %}
