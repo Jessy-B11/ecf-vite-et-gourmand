@@ -5,97 +5,73 @@
 {% block body %}
     {% set donnees = confirmation.donnees %}
 
-    <main class="container">
+    <main class="container commande-page confirmation-page">
         <h1>Confirmer les modifications</h1>
+        <p class="commande-introduction">Commande n°{{ commande.id }} · {{ commande.menu.nom }}</p>
+
+        <div class="commande-layout">
+            <div class="commande-fields">
+                <section class="menu-card" aria-labelledby="modification-prestation">
+                    <h2 id="modification-prestation">Informations à enregistrer</h2>
+                    <dl class="commande-amounts">
+                        <div>
+                            <dt>Date de la prestation</dt>
+                            <dd>{{ donnees.date_prestation|date('d/m/Y') }}</dd>
+                        </div>
+                        <div>
+                            <dt>Heure souhaitée</dt>
+                            <dd>{{ donnees.heure_livraison }}</dd>
+                        </div>
+                        <div>
+                            <dt>Nombre de personnes</dt>
+                            <dd>{{ donnees.nombre_personnes }}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="menu-card" aria-labelledby="modification-adresse">
+                    <h2 id="modification-adresse">Adresse retenue</h2>
+                    <p class="confirmation-address">{{ donnees.adresse_livraison }}<br>{{ donnees.code_postal_livraison }} {{ donnees.ville_livraison }}</p>
+                    <p>Téléphone : {{ donnees.telephone_contact }}</p>
+                </section>
+            </div>
+
+            <section class="menu-card commande-summary" aria-labelledby="modification-recapitulatif">
+                <h2 id="modification-recapitulatif">Récapitulatif final</h2>
+                <h3 class="menu-card-title">{{ commande.menu.nom }}</h3>
+                <dl class="commande-amounts">
+                    <div>
+                        <dt>Menu avant remise</dt>
+                        <dd>{{ (recapitulatif.montant_menu / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                    <div>
+                        <dt>Remise</dt>
+                        <dd>{{ (recapitulatif.remise / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                    <div>
+                        <dt>Frais de livraison</dt>
+                        <dd>{{ (recapitulatif.frais_livraison / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                    <div>
+                        <dt>Total actuellement enregistré</dt>
+                        <dd>{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                    <div class="commande-total confirmation-total">
+                        <dt>Nouveau total</dt>
+                        <dd>{{ (recapitulatif.total / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                </dl>
+
+                <form class="confirmation-form" method="post" action="{{ path('app_modification_commande_confirmation', {jeton: confirmation.jeton}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('modifier_commande_' ~ confirmation.jeton) }}">
+                    <button class="vg-btn" type="submit" aria-describedby="modification-note">Confirmer les modifications</button>
+                </form>
+                <p class="commande-note" id="modification-note">Aucune modification n’est encore enregistrée. Confirmez pour mettre à jour votre commande.</p>
+            </section>
+        </div>
 
         <p>
-            Commande n°{{ commande.id }}
-            — {{ commande.menu.nom }}
-        </p>
-
-        <h2>Informations à enregistrer</h2>
-
-        <p>
-            Nombre de personnes : {{ donnees.nombre_personnes }}
-        </p>
-
-        <p>
-            Prestation :
-            {{ donnees.date_prestation|date('d/m/Y') }}
-            à {{ donnees.heure_livraison }}
-        </p>
-
-        <p>
-            Livraison :
-            {{ donnees.adresse_livraison }},
-            {{ donnees.code_postal_livraison }}
-            {{ donnees.ville_livraison }}
-        </p>
-
-        <p>
-            Téléphone : {{ donnees.telephone_contact }}
-        </p>
-
-        <p>
-            Menu avant remise :
-            {{ (recapitulatif.montant_menu / 100)
-                |number_format(2, ',', ' ') }} €
-        </p>
-
-        <p>
-            Remise :
-            {{ (recapitulatif.remise / 100)
-                |number_format(2, ',', ' ') }} €
-        </p>
-
-        <p>
-            Frais de livraison :
-            {{ (recapitulatif.frais_livraison / 100)
-                |number_format(2, ',', ' ') }} €
-        </p>
-
-        <p>
-            Total actuellement enregistré :
-            {{ (commande.montantTotalCentimes / 100)
-                |number_format(2, ',', ' ') }} €
-        </p>
-
-        <p>
-            <strong>
-                Nouveau total :
-                {{ (recapitulatif.total / 100)
-                    |number_format(2, ',', ' ') }} €
-            </strong>
-        </p>
-
-        <form
-            method="post"
-            action="{{ path(
-                'app_modification_commande_confirmation',
-                {jeton: confirmation.jeton}
-            ) }}"
-        >
-            <input
-                type="hidden"
-                name="_token"
-                value="{{ csrf_token(
-                    'modifier_commande_' ~ confirmation.jeton
-                ) }}"
-            >
-
-            <button class="vg-btn" type="submit">
-                Confirmer les modifications
-            </button>
-        </form>
-
-        <p>
-            <a class="vg-btn vg-btn--secondaire"
-                href="{{ path('app_mes_commandes_show', {
-                id: commande.id
-            }) }}"
-            >
-                Revenir à ma commande sans enregistrer
-            </a>
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes_show', {id: commande.id}) }}">Revenir à ma commande sans enregistrer</a>
         </p>
     </main>
 {% endblock %}

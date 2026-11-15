@@ -1035,6 +1035,51 @@ h6 {
     flex: 1 1 12rem;
 }
 
+.commande-detail-prestation > div {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+}
+
+.commande-history {
+    margin: 0;
+    padding: 0 0 0 6px;
+    list-style: none;
+}
+
+.commande-history li {
+    position: relative;
+    padding: 0 0 20px 24px;
+    border-left: 2px solid #ddb9bf;
+}
+
+.commande-history li::before {
+    position: absolute;
+    top: 6px;
+    left: -6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--bordeaux);
+    content: '';
+}
+
+.commande-history li:last-child {
+    padding-bottom: 0;
+    border-color: transparent;
+}
+
+.commande-history time {
+    display: block;
+    color: #62615b;
+    font-size: 0.875rem;
+}
+
+.commande-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
 .commandes-list {
     display: grid;
     gap: 16px;

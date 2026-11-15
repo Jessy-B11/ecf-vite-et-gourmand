@@ -14,7 +14,7 @@
         'annulee': 'Annulée'
     } %}
 
-    <main class="container">
+    <main class="container commande-page commande-detail">
         <h1>Commande n°{{ commande.id }}</h1>
         {% for type, messages in app.flashes() %}
             {% for message in messages %}
@@ -24,136 +24,114 @@
             {% endfor %}
         {% endfor %}
 
-        <p>
-            Statut :
-            <strong>
-                {{ statuts[commande.statut]|default(commande.statut) }}
-            </strong>
+        <p class="commande-introduction">
+            Statut : <strong>{{ statuts[commande.statut]|default(commande.statut) }}</strong>
         </p>
 
-        <section aria-labelledby="details-prestation">
-            <h2 id="details-prestation">Votre prestation</h2>
+        <div class="commande-fields">
+            <div class="commande-layout">
+                <section class="menu-card commande-summary" aria-labelledby="details-prestation">
+                    <h2 id="details-prestation">Votre prestation</h2>
+                    <dl class="commande-amounts commande-detail-prestation">
+                        <div>
+                            <dt>Menu</dt>
+                            <dd>{{ commande.menu.nom }}</dd>
+                        </div>
+                        <div>
+                            <dt>Date</dt>
+                            <dd>
+                                {{ commande.datePrestation|date('d/m/Y') }}
+                                à {{ commande.heureLivraison|date('H:i') }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Nombre de personnes</dt>
+                            <dd>{{ commande.nombrePersonnes }}</dd>
+                        </div>
+                        <div>
+                            <dt>Livraison</dt>
+                            <dd>
+                                {{ commande.adresseLivraison }}<br>
+                                {{ commande.codePostalLivraison }} {{ commande.villeLivraison }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Téléphone de contact</dt>
+                            <dd>{{ commande.telephoneContact }}</dd>
+                        </div>
+                    </dl>
+                </section>
 
-            <p>Menu : {{ commande.menu.nom }}</p>
+                <section class="menu-card commande-summary" aria-labelledby="details-prix">
+                    <h2 id="details-prix">Montants enregistrés</h2>
+                    <dl class="commande-amounts">
+                        <div>
+                            <dt>Menu avant remise</dt>
+                            <dd>{{ (commande.montantMenuCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Remise</dt>
+                            <dd>{{ (commande.montantRemiseCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Livraison</dt>
+                            <dd>{{ (commande.fraisLivraisonCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div class="commande-total confirmation-total">
+                            <dt>Total</dt>
+                            <dd>{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                    </dl>
+                </section>
+            </div>
 
-            <p>
-                Date :
-                {{ commande.datePrestation|date('d/m/Y') }}
-                à {{ commande.heureLivraison|date('H:i') }}
-            </p>
-
-            <p>
-                Nombre de personnes : {{ commande.nombrePersonnes }}
-            </p>
-
-            <p>
-                Livraison :
-                {{ commande.adresseLivraison }},
-                {{ commande.codePostalLivraison }}
-                {{ commande.villeLivraison }}
-            </p>
-
-            <p>
-                Téléphone de contact : {{ commande.telephoneContact }}
-            </p>
-        </section>
-
-        <section aria-labelledby="details-prix">
-            <h2 id="details-prix">Montants enregistrés</h2>
-
-            <p>
-                Menu avant remise :
-                {{ (commande.montantMenuCentimes / 100)
-                    |number_format(2, ',', ' ') }} €
-            </p>
-
-            <p>
-                Remise :
-                {{ (commande.montantRemiseCentimes / 100)
-                    |number_format(2, ',', ' ') }} €
-            </p>
-
-            <p>
-                Livraison :
-                {{ (commande.fraisLivraisonCentimes / 100)
-                    |number_format(2, ',', ' ') }} €
-            </p>
-
-            <p>
-                <strong>
-                    Total :
-                    {{ (commande.montantTotalCentimes / 100)
-                        |number_format(2, ',', ' ') }} €
-                </strong>
-            </p>
-        </section>
-
-        <section aria-labelledby="historique-commande">
-            <h2 id="historique-commande">Suivi de votre commande</h2>
-
-            <ol>
-                {% for etape in historique %}
-                    <li>
-                        {{ etape.dateChangement
-                            |date('d/m/Y à H:i', 'Europe/Paris') }}
-                        —
-                        {{ statuts[etape.statut]|default(etape.statut) }}
-                    </li>
-                {% else %}
-                    <li>Aucune étape disponible pour le moment.</li>
-                {% endfor %}
-            </ol>
-        </section>
-        {% if commande.statut == 'en_attente' %}
-            <p>
-                <a class="vg-btn vg-btn--secondaire"
-                    href="{{ path('app_mes_commandes_modifier', {
-            id: commande.id
-        }) }}"
-                >
-                    Modifier ma commande
-                </a>
-            </p>
-            <section aria-labelledby="annulation-commande">
-                <h2 id="annulation-commande">Annuler la commande</h2>
-
-                <p>
-                    Vous pouvez annuler cette commande tant que
-                    notre équipe ne l’a pas acceptée.
-                </p>
-
-                <form
-                    method="post"
-                    action="{{ path('app_mes_commandes_annuler', {
-                        id: commande.id
-                    }) }}"
-                >
-                    <input
-                        type="hidden"
-                        name="_token"
-                        value="{{ csrf_token(
-                            'annuler_commande_' ~ commande.id
-                        ) }}"
-                    >
-
-                    <button class="vg-btn vg-btn--secondaire" type="submit">
-                        Annuler ma commande
-                    </button>
-                </form>
+            <section class="menu-card" aria-labelledby="historique-commande">
+                <h2 id="historique-commande">Suivi de votre commande</h2>
+                <ol class="commande-history" role="list">
+                    {% for etape in historique %}
+                        <li>
+                            <strong>{{ statuts[etape.statut]|default(etape.statut) }}</strong>
+                            <time datetime="{{ etape.dateChangement|date('c', 'Europe/Paris') }}">
+                                {{ etape.dateChangement|date('d/m/Y à H:i', 'Europe/Paris') }}
+                            </time>
+                        </li>
+                    {% else %}
+                        <li>Aucune étape disponible pour le moment.</li>
+                    {% endfor %}
+                </ol>
             </section>
-        {% endif %}
-        </section>
 
-        {% if commande.statut == 'terminee' %}
-            <p>
-                <a class="vg-btn" href="{{ path('app_commande_avis', {id: commande.id}) }}">
-                    Laisser un avis
+            {% if commande.statut == 'en_attente' %}
+                <section class="menu-card" aria-labelledby="annulation-commande">
+                    <h2 id="annulation-commande">Gérer ma commande</h2>
+                    <p>
+                        Vous pouvez annuler cette commande tant que
+                        notre équipe ne l’a pas acceptée.
+                    </p>
+                    <div class="commande-detail-actions">
+                        <a class="vg-btn vg-btn--secondaire"
+                            href="{{ path('app_mes_commandes_modifier', {id: commande.id}) }}"
+                        >
+                            Modifier ma commande
+                        </a>
+                        <form method="post" action="{{ path('app_mes_commandes_annuler', {id: commande.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('annuler_commande_' ~ commande.id) }}">
+                            <button class="vg-btn vg-btn--secondaire" type="submit">Annuler ma commande</button>
+                        </form>
+                    </div>
+                </section>
+            {% endif %}
+
+            <div class="commande-detail-actions">
+                {% if commande.statut == 'terminee' %}
+                    <a class="vg-btn" href="{{ path('app_commande_avis', {id: commande.id}) }}">
+                        Laisser un avis
+                    </a>
+                {% endif %}
+                <a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes') }}">
+                    Revenir à mes commandes
                 </a>
-            </p>
-        {% endif %}
-
-        <a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes') }}">
-            Revenir à mes commandes
-        </a>
+            </div>
+        </div>
     </main>
 {% endblock %}
