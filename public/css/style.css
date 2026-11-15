@@ -1356,6 +1356,10 @@ h6 {
     margin-block: 2rem;
 }
 
+.moderation-comment {
+    white-space: pre-line;
+}
+
 .stats-chart {
     margin: 1.5rem 0;
 }
@@ -1395,6 +1399,28 @@ h6 {
 
 .stats-table-scroll {
     overflow-x: auto;
+}
+
+.stats-table-scroll:focus-visible {
+    outline: 3px solid var(--bordeaux);
+    outline-offset: 3px;
+}
+
+.stats-table--ca {
+    min-width: 36rem;
+    table-layout: fixed;
+}
+
+.stats-table--ca th:first-child {
+    width: 44%;
+}
+
+.stats-table--ca th:nth-child(2) {
+    width: 24%;
+}
+
+.stats-table-hint {
+    display: none;
 }
 
 .stats-table {
@@ -1440,6 +1466,7 @@ h6 {
 }
 
 .stats-filters > div {
+    flex: 1 1 12rem;
     min-width: 0;
 }
 
@@ -1466,7 +1493,15 @@ h6 {
     gap: 0.5rem;
 }
 
+.stats-filters > .stats-filter-actions {
+    flex: 0 1 auto;
+}
+
 @media (max-width: 600px) {
+    .stats-table-hint {
+        display: block;
+    }
+
     .stats-chart li {
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 0.5rem;

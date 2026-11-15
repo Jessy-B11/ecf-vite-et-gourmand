@@ -3,7 +3,7 @@
 {% block title %}Statistiques — Vite & Gourmand{% endblock %}
 
 {% block body %}
-    <main class="container stats">
+    <main class="container stats commande-page">
         <h1>Statistiques</h1>
         <p>Les commandes et le chiffre d’affaires de Vite &amp; Gourmand.</p>
         <p>Les chiffres reflètent la dernière actualisation des statistiques.</p>
@@ -38,8 +38,15 @@
                             {% endfor %}
                         </ul>
                     </figure>
+                {% endif %}
+            </section>
 
-                    <div class="stats-table-scroll">
+            <section class="menu-card stats-section" aria-labelledby="stats-commandes-chiffres">
+                <h2 id="stats-commandes-chiffres">Nombre de commandes par menu</h2>
+                {% if menus is empty %}
+                    <p>Aucune donnée de commande à afficher dans le tableau.</p>
+                {% else %}
+                    <div class="stats-table-scroll" tabindex="0" role="region" aria-labelledby="stats-commandes-chiffres">
                         <table class="stats-table" id="stats-commandes-tableau">
                             <caption>Nombre de commandes par menu</caption>
                             <thead>
@@ -58,8 +65,8 @@
                 {% endif %}
             </section>
 
-            <section class="menu-card stats-section" aria-labelledby="stats-ca-titre">
-                <h2 id="stats-ca-titre">Chiffre d’affaires par menu</h2>
+            <section class="menu-card stats-section" aria-labelledby="stats-filtres-titre">
+                <h2 id="stats-filtres-titre">Filtrer le chiffre d’affaires</h2>
                 <p id="stats-ca-regles">
                     Seules les commandes <strong>terminées</strong> entrent dans le chiffre d’affaires :
                     montant historique du menu après remise, <strong>hors frais de livraison</strong>.
@@ -98,13 +105,17 @@
                         <a class="vg-btn vg-btn--secondaire" href="{{ path('app_admin_statistiques') }}">Réinitialiser</a>
                     </div>
                 </form>
+            </section>
 
+            <section class="menu-card stats-section" aria-labelledby="stats-ca-titre">
+                <h2 id="stats-ca-titre">Chiffre d’affaires par menu</h2>
                 {% if ca is not null %}
                     {% if ca.menus is empty %}
                         <p>Aucune commande terminée ne correspond à ces filtres.</p>
                     {% endif %}
-                    <div class="stats-table-scroll">
-                        <table class="stats-table" id="stats-ca-tableau">
+                    <p class="commande-note stats-table-hint" id="stats-ca-aide">Sur mobile, faites défiler le tableau horizontalement pour consulter toutes les colonnes.</p>
+                    <div class="stats-table-scroll" tabindex="0" role="region" aria-labelledby="stats-ca-titre" aria-describedby="stats-ca-aide">
+                        <table class="stats-table stats-table--ca" id="stats-ca-tableau">
                             <caption>Chiffre d’affaires des commandes terminées pour les filtres sélectionnés</caption>
                             <thead>
                                 <tr>
@@ -131,6 +142,8 @@
                             </tfoot>
                         </table>
                     </div>
+                {% else %}
+                    <p>Le chiffre d’affaires sera affiché après correction des filtres.</p>
                 {% endif %}
             </section>
         {% endif %}
