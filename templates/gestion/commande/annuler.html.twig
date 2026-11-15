@@ -1,75 +1,50 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}
-    Annuler la commande n°{{ commande.id }} — Gestion
-{% endblock %}
+{% block title %}Annuler la commande n°{{ commande.id }} — Gestion{% endblock %}
 
 {% block body %}
-    <main class="container">
+    <main class="container commande-page">
         <h1>Annuler la commande n°{{ commande.id }}</h1>
-
-        <p>
-            Client :
-            {{ commande.utilisateur.prenom }}
-            {{ commande.utilisateur.nom }}
-        </p>
-
-        <p>
-            Email :
-            {{ commande.utilisateur.email }}
-        </p>
-
-        <p>
-            Téléphone de la commande :
-            {{ commande.telephoneContact }}
-        </p>
-
-        <p>Menu : {{ commande.menu.nom }}</p>
-
-        <p>
-            Prestation :
-            {{ commande.datePrestation|date('d/m/Y') }}
-            à {{ commande.heureLivraison|date('H:i') }}
-        </p>
-
-        <p>
-            Contactez le client avant de confirmer.
-            L’annulation rendra une unité de stock au menu.
-        </p>
-
-        {% if annulationForm.vars.submitted
-            and not annulationForm.vars.valid %}
-            <p class="form-error" role="alert">
-                Veuillez corriger les erreurs du formulaire.
-            </p>
-        {% endif %}
-
+        <p class="commande-introduction">Contactez le client avant de confirmer.</p>
         {{ form_start(annulationForm, {
-            action: path('app_gestion_commandes_annuler', {
-                id: commande.id
-            }),
-            attr: {class: 'registration-form'}
+            action: path('app_gestion_commandes_annuler', {id: commande.id}),
+            attr: annulationForm.vars.attr|merge({class: (annulationForm.vars.attr.class|default('') ~ ' registration-form commande-form')|trim})
         }) }}
-
+        {% if annulationForm.vars.submitted and not annulationForm.vars.valid %}
+            <p class="form-error" role="alert">Veuillez corriger les erreurs du formulaire.</p>
+        {% endif %}
         {{ form_errors(annulationForm) }}
-        {{ form_row(annulationForm.modeContact) }}
-        {{ form_row(annulationForm.motif) }}
-        {{ form_row(annulationForm.clientContacte) }}
 
-        <button class="vg-btn vg-btn--secondaire" type="submit">
-            Confirmer l’annulation de la commande
-        </button>
+        <div class="commande-layout">
+            <div class="commande-fields">
+                <section class="menu-card commande-conditions" aria-labelledby="consequences-annulation">
+                    <h2 id="consequences-annulation">Annulation de la commande</h2>
+                    <p>L’annulation rendra une unité de stock au menu.</p>
+                </section>
+                <section class="menu-card" aria-labelledby="contact-annulation">
+                    <h2 id="contact-annulation">Contact préalable</h2>
+                    <div class="commande-fields">
+                        {{ form_row(annulationForm.modeContact) }}
+                        {{ form_row(annulationForm.motif) }}
+                        <div class="registration-terms">{{ form_row(annulationForm.clientContacte) }}</div>
+                        <button class="vg-btn vg-btn--secondaire" type="submit">Confirmer l’annulation de la commande</button>
+                    </div>
+                </section>
+            </div>
 
+            <aside class="menu-card commande-summary" aria-labelledby="commande-annulee">
+                <h2 id="commande-annulee">Commande concernée</h2>
+                <h3 class="menu-card-title">{{ commande.menu.nom }}</h3>
+                <p>Client : {{ commande.utilisateur.prenom }} {{ commande.utilisateur.nom }}</p>
+                <p>Email : {{ commande.utilisateur.email }}</p>
+                <p>Téléphone de la commande : {{ commande.telephoneContact }}</p>
+                <dl class="commande-amounts">
+                    <div><dt>Prestation</dt><dd>{{ commande.datePrestation|date('d/m/Y') }} à {{ commande.heureLivraison|date('H:i') }}</dd></div>
+                    <div class="commande-total"><dt>Total enregistré</dt><dd>{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                </dl>
+            </aside>
+        </div>
         {{ form_end(annulationForm) }}
-
-        <p>
-            <a class="vg-btn vg-btn--secondaire"
-                href="{{ path('app_gestion_commandes_show', {
-                id: commande.id
-            }) }}"
-            >
-                Revenir au détail sans annuler
-            </a>
-        </p>
+        <p><a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes_show', {id: commande.id}) }}">Revenir au détail sans annuler</a></p>
     </main>
 {% endblock %}

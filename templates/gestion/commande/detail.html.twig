@@ -16,361 +16,164 @@
         annulee: 'Annulée'
     } %}
 
-    <main class="container">
+    <main class="container commande-page">
         <h1>Commande n°{{ commande.id }}</h1>
         {% for type, messages in app.flashes %}
             {% for message in messages %}
-                <p class="flash flash-{{ type }}" role="status">
-                    {{ message }}
-                </p>
+                <p class="flash flash-{{ type }}" role="status">{{ message }}</p>
             {% endfor %}
         {% endfor %}
-
-        <p>
-            Statut :
-            <strong>
-                {{ statuts[commande.statut] ?? commande.statut }}
-            </strong>
+        <p class="commande-introduction">
+            Statut : <strong>{{ statuts[commande.statut] ?? commande.statut }}</strong><br>
+            Créée le {{ commande.dateCreation|date('d/m/Y à H:i', 'Europe/Paris') }}
         </p>
 
-        <p>
-            Créée le
-            {{ commande.dateCreation|date('d/m/Y à H:i', 'Europe/Paris') }}
-        </p>
-
-        <section aria-labelledby="client-commande">
-            <h2 id="client-commande">Client</h2>
-
-            <p>
-                {{ commande.utilisateur.prenom }}
-                {{ commande.utilisateur.nom }}
-            </p>
-
-            <p>Email : {{ commande.utilisateur.email }}</p>
-        </section>
-
-        <section aria-labelledby="prestation-commande">
-            <h2 id="prestation-commande">Prestation et livraison</h2>
-
-            <p>Menu : {{ commande.menu.nom }}</p>
-
-            <p>
-                Nombre de personnes :
-                {{ commande.nombrePersonnes }}
-            </p>
-
-            <p>
-                Prestation :
-                {{ commande.datePrestation|date('d/m/Y') }}
-                à {{ commande.heureLivraison|date('H:i') }}
-            </p>
-
-            <p>
-                Adresse :
-                {{ commande.adresseLivraison }},
-                {{ commande.codePostalLivraison }}
-                {{ commande.villeLivraison }}
-            </p>
-
-            <p>
-                Téléphone de contact :
-                {{ commande.telephoneContact }}
-            </p>
-
-            <p>
-                Matériel prêté :
-                {{ commande.materielPrete ? 'Oui' : 'Non' }}
-            </p>
-        </section>
-
-        <section aria-labelledby="montants-commande">
-            <h2 id="montants-commande">Montants enregistrés</h2>
-
-            <p>
-                Menu avant remise :
-                {{ (commande.montantMenuCentimes / 100)
-                    |number_format(2, ',', ' ') }} €
-            </p>
-
-            <p>
-                Remise :
-                {{ (commande.montantRemiseCentimes / 100)
-                    |number_format(2, ',', ' ') }} €
-            </p>
-
-            <p>
-                Livraison :
-                {{ (commande.fraisLivraisonCentimes / 100)
-                    |number_format(2, ',', ' ') }} €
-            </p>
-
-            <p>
-                <strong>
-                    Total :
-                    {{ (commande.montantTotalCentimes / 100)
-                        |number_format(2, ',', ' ') }} €
-                </strong>
-            </p>
-        </section>
-
-        {% if commande.statut == 'en_attente' %}
-            <section aria-labelledby="actions-commande">
-                <h2 id="actions-commande">Actions</h2>
-
-                <form
-                    method="post"
-                    action="{{ path(
-                        'app_gestion_commandes_accepter',
-                        {id: commande.id}
-                    ) }}"
-                >
-                    <input
-                        type="hidden"
-                        name="_token"
-                        value="{{ csrf_token(
-                            'accepter_commande_' ~ commande.id
-                        ) }}"
-                    >
-
-                    <button class="vg-btn" type="submit">
-                        Accepter la commande
-                    </button>
-                </form>
-            </section>
-        {% endif %}
-
-        {% set actionsSuivi = {
-    acceptee: {
-        statut: 'en_preparation',
-        libelle: 'Commencer la préparation'
-    },
-    en_preparation: {
-        statut: 'en_livraison',
-        libelle: 'Démarrer la livraison'
-    },
-    en_livraison: {
-        statut: 'livree',
-        libelle: 'Confirmer la livraison'
-    }
-} %}
-
-        {% if commande.statut == 'livree' %}
-            {% if commande.materielPrete %}
-                {% set actionsSuivi = actionsSuivi|merge({
-            livree: {
-                statut: 'attente_retour_materiel',
-                libelle: 'Demander le retour du matériel'
-            }
-        }) %}
-            {% else %}
-                {% set actionsSuivi = actionsSuivi|merge({
-            livree: {
-                statut: 'terminee',
-                libelle: 'Terminer la commande'
-            }
-        }) %}
+        <div class="commande-fields">
+            <div class="commande-layout">
+                <div class="commande-fields">
+                    <section class="menu-card commande-summary" aria-labelledby="client-commande">
+                        <h2 id="client-commande">Client</h2>
+                        <p>{{ commande.utilisateur.prenom }} {{ commande.utilisateur.nom }}</p>
+                        <p>Email : {{ commande.utilisateur.email }}</p>
+                    </section>
+                    <section class="menu-card commande-summary" aria-labelledby="prestation-commande">
+                        <h2 id="prestation-commande">Prestation et livraison</h2>
+                        <dl class="commande-amounts commande-detail-prestation">
+                            <div><dt>Menu</dt><dd>{{ commande.menu.nom }}</dd></div>
+                            <div><dt>Nombre de personnes</dt><dd>{{ commande.nombrePersonnes }}</dd></div>
+                            <div><dt>Prestation</dt><dd>{{ commande.datePrestation|date('d/m/Y') }} à {{ commande.heureLivraison|date('H:i') }}</dd></div>
+                            <div><dt>Adresse</dt><dd>{{ commande.adresseLivraison }}<br>{{ commande.codePostalLivraison }} {{ commande.villeLivraison }}</dd></div>
+                            <div><dt>Téléphone de contact</dt><dd>{{ commande.telephoneContact }}</dd></div>
+                        </dl>
+                    </section>
+                </div>
+                <section class="menu-card commande-summary" aria-labelledby="montants-commande">
+                    <h2 id="montants-commande">Montants enregistrés</h2>
+                    <dl class="commande-amounts">
+                        <div><dt>Menu avant remise</dt><dd>{{ (commande.montantMenuCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                        <div><dt>Remise</dt><dd>{{ (commande.montantRemiseCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                        <div><dt>Livraison</dt><dd>{{ (commande.fraisLivraisonCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                        <div class="commande-total confirmation-total"><dt>Total</dt><dd>{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                    </dl>
+                </section>
+            </div>
+            {% if commande.statut == 'en_attente' %}
+                <section class="menu-card commande-conditions" aria-labelledby="actions-commande">
+                    <h2 id="actions-commande">Actions</h2>
+                    <form method="post" action="{{ path('app_gestion_commandes_accepter', {id: commande.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('accepter_commande_' ~ commande.id) }}">
+                        <button class="vg-btn" type="submit">Accepter la commande</button>
+                    </form>
+                </section>
             {% endif %}
-        {% endif %}
 
-        {% if actionsSuivi[commande.statut] is defined %}
-            {% set actionSuivi = actionsSuivi[commande.statut] %}
-
-            <section aria-labelledby="suivi-commande">
-                <h2 id="suivi-commande">Faire avancer la commande</h2>
-
-                <form
-                    method="post"
-                    action="{{ path(
-                'app_gestion_commandes_suivi',
-                {
-                    id: commande.id,
-                    statut: actionSuivi.statut
-                }
-            ) }}"
-                >
-                    <input
-                        type="hidden"
-                        name="_token"
-                        value="{{ csrf_token(
-                    'suivi_commande_'
-                    ~ commande.id
-                    ~ '_'
-                    ~ actionSuivi.statut
-                ) }}"
-                    >
-
-                    <button class="vg-btn" type="submit">
-                        {{ actionSuivi.libelle }}
-                    </button>
-                </form>
-            </section>
-        {% endif %}
-        {% if commande.statut in ['en_attente', 'acceptee'] %}
-            {% set pretSouhaite = commande.materielPrete ? '0' : '1' %}
-
-            <section aria-labelledby="gestion-materiel">
-                <h2 id="gestion-materiel">Prêt de matériel</h2>
-
-                <p>
-                    Prêt actuellement prévu :
-                    <strong>
-                        {{ commande.materielPrete ? 'Oui' : 'Non' }}
-                    </strong>
-                </p>
-
-                <p>
-                    Ce choix peut être modifié avant le début
-                    de la préparation.
-                </p>
-
-                <form
-                    method="post"
-                    action="{{ path(
-                'app_gestion_commandes_materiel',
-                {
-                    id: commande.id,
-                    pret: pretSouhaite
-                }
-            ) }}"
-                >
-                    <input
-                        type="hidden"
-                        name="_token"
-                        value="{{ csrf_token(
-                    'materiel_commande_'
-                    ~ commande.id
-                    ~ '_'
-                    ~ pretSouhaite
-                ) }}"
-                    >
-
-                    <button class="vg-btn vg-btn--secondaire" type="submit">
-                        {{ commande.materielPrete
-                    ? 'Retirer le prêt prévu'
-                    : 'Prévoir un prêt de matériel' }}
-                    </button>
-                </form>
-            </section>
-        {% endif %}
-
-        {% if commande.dateRetourMateriel is not null %}
-            <p>
-                Restitution confirmée le
-                {{ commande.dateRetourMateriel
-            |date('d/m/Y à H:i:s', 'Europe/Paris') }}
-            </p>
-        {% endif %}
-
-        {% if commande.statut == 'attente_retour_materiel'
-    and commande.materielPrete
-    and commande.dateRetourMateriel is null %}
-            <section aria-labelledby="retour-materiel">
-                <h2 id="retour-materiel">Restitution du matériel</h2>
-
-                <p>
-                    Confirmez uniquement après réception de l’ensemble
-                    du matériel prêté pour cette commande.
-                </p>
-
-                <form
-                    method="post"
-                    action="{{ path(
-                'app_gestion_commandes_retour_materiel',
-                {id: commande.id}
-            ) }}"
-                >
-                    <input
-                        type="hidden"
-                        name="_token"
-                        value="{{ csrf_token(
-                    'retour_materiel_commande_' ~ commande.id
-                ) }}"
-                    >
-
-                    <button class="vg-btn" type="submit">
-                        Confirmer la restitution et terminer la commande
-                    </button>
-                </form>
-            </section>
-        {% endif %}
-        {% if commande.statut in [
-    'en_attente',
-    'acceptee',
-    'en_preparation'
-] %}
-            <p>
-                <a class="vg-btn vg-btn--secondaire"
-                    href="{{ path('app_gestion_commandes_modifier', {
-            id: commande.id
-        }) }}"
-                >
-                    Modifier après contact avec le client
-                </a>
-            </p>
-        {% endif %}
-
-        {% if commande.statut in [
-    'en_attente',
-    'acceptee',
-    'en_preparation'
-] %}
-            <p>
-                <a class="vg-btn vg-btn--secondaire"
-                    href="{{ path('app_gestion_commandes_annuler', {
-            id: commande.id
-        }) }}"
-                >
-                    Annuler après contact avec le client
-                </a>
-            </p>
-        {% endif %}
-
-        <section aria-labelledby="historique-commande">
-            <h2 id="historique-commande">Historique</h2>
-
-            <ol>
-                {% for evenement in historique %}
-                    <li>
-                        <p>
-                            {{ evenement.dateChangement
-                                |date('d/m/Y à H:i:s', 'Europe/Paris') }}
-                            —
-                            {{ statuts[evenement.statut]
-                                ?? evenement.statut }}
-                        </p>
-
-                        <p>
-                            Auteur :
-                            {% if evenement.auteur is not null %}
-                                {{ evenement.auteur.prenom }}
-                                {{ evenement.auteur.nom }}
-                                (compte n°{{ evenement.auteur.id }})
-                            {% else %}
-                                Non renseigné
-                            {% endif %}
-                        </p>
-
-                        {% if evenement.modeContact is not null %}
-                            <p>
-                                Mode de contact :
-                                {{ evenement.modeContact }}
-                            </p>
-                        {% endif %}
-
-                        {% if evenement.motif is not null %}
-                            <p>Motif : {{ evenement.motif }}</p>
-                        {% endif %}
-                    </li>
+            {% set actionsSuivi = {
+                acceptee: {statut: 'en_preparation', libelle: 'Commencer la préparation'},
+                en_preparation: {statut: 'en_livraison', libelle: 'Démarrer la livraison'},
+                en_livraison: {statut: 'livree', libelle: 'Confirmer la livraison'}
+            } %}
+            {% if commande.statut == 'livree' %}
+                {% if commande.materielPrete %}
+                    {% set actionsSuivi = actionsSuivi|merge({
+                        livree: {statut: 'attente_retour_materiel', libelle: 'Demander le retour du matériel'}
+                    }) %}
                 {% else %}
-                    <li>Aucun événement enregistré.</li>
-                {% endfor %}
-            </ol>
-        </section>
+                    {% set actionsSuivi = actionsSuivi|merge({
+                        livree: {statut: 'terminee', libelle: 'Terminer la commande'}
+                    }) %}
+                {% endif %}
+            {% endif %}
+            {% if actionsSuivi[commande.statut] is defined %}
+                {% set actionSuivi = actionsSuivi[commande.statut] %}
+                <section class="menu-card commande-conditions" aria-labelledby="suivi-commande">
+                    <h2 id="suivi-commande">Faire avancer la commande</h2>
+                    <form method="post" action="{{ path('app_gestion_commandes_suivi', {id: commande.id, statut: actionSuivi.statut}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('suivi_commande_' ~ commande.id ~ '_' ~ actionSuivi.statut) }}">
+                        <button class="vg-btn" type="submit">{{ actionSuivi.libelle }}</button>
+                    </form>
+                </section>
+            {% endif %}
 
-        <p>
-            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes') }}">
-                Revenir à la liste des commandes
-            </a>
-        </p>
+            <section class="menu-card" aria-labelledby="materiel-commande">
+                <h2 id="materiel-commande">Matériel</h2>
+                <p>Matériel prêté : {{ commande.materielPrete ? 'Oui' : 'Non' }}</p>
+                {% if commande.statut in ['en_attente', 'acceptee'] %}
+                    {% set pretSouhaite = commande.materielPrete ? '0' : '1' %}
+                    <section aria-labelledby="gestion-materiel">
+                        <h3 id="gestion-materiel">Prêt de matériel</h3>
+                        <p>Prêt actuellement prévu : <strong>{{ commande.materielPrete ? 'Oui' : 'Non' }}</strong></p>
+                        <p>Ce choix peut être modifié avant le début de la préparation.</p>
+                        <form method="post" action="{{ path('app_gestion_commandes_materiel', {id: commande.id, pret: pretSouhaite}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('materiel_commande_' ~ commande.id ~ '_' ~ pretSouhaite) }}">
+                            <button class="vg-btn vg-btn--secondaire" type="submit">{{ commande.materielPrete ? 'Retirer le prêt prévu' : 'Prévoir un prêt de matériel' }}</button>
+                        </form>
+                    </section>
+                {% endif %}
+                {% if commande.dateRetourMateriel is not null %}
+                    <p>Restitution confirmée le {{ commande.dateRetourMateriel|date('d/m/Y à H:i:s', 'Europe/Paris') }}</p>
+                {% endif %}
+                {% if commande.statut == 'attente_retour_materiel' and commande.materielPrete and commande.dateRetourMateriel is null %}
+                    <section aria-labelledby="retour-materiel">
+                        <h3 id="retour-materiel">Restitution du matériel</h3>
+                        <p>Confirmez uniquement après réception de l’ensemble du matériel prêté pour cette commande.</p>
+                        <form method="post" action="{{ path('app_gestion_commandes_retour_materiel', {id: commande.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('retour_materiel_commande_' ~ commande.id) }}">
+                            <button class="vg-btn" type="submit">Confirmer la restitution et terminer la commande</button>
+                        </form>
+                    </section>
+                {% endif %}
+            </section>
+            <section class="menu-card" aria-labelledby="historique-commande">
+                <h2 id="historique-commande">Historique</h2>
+
+                <ol class="commande-history" role="list">
+                    {% for evenement in historique %}
+                        <li>
+                            <strong>{{ statuts[evenement.statut] ?? evenement.statut }}</strong>
+                            <time datetime="{{ evenement.dateChangement|date('c', 'Europe/Paris') }}">
+                                {{ evenement.dateChangement|date('d/m/Y à H:i:s', 'Europe/Paris') }}
+                            </time>
+
+                            <p>
+                                Auteur :
+                                {% if evenement.auteur is not null %}
+                                    {{ evenement.auteur.prenom }}
+                                    {{ evenement.auteur.nom }}
+                                    (compte n°{{ evenement.auteur.id }})
+                                {% else %}
+                                    Non renseigné
+                                {% endif %}
+                            </p>
+
+                            {% if evenement.modeContact is not null %}
+                                <p>
+                                    Mode de contact :
+                                    {{ evenement.modeContact }}
+                                </p>
+                            {% endif %}
+
+                            {% if evenement.motif is not null %}
+                                <p>Motif : {{ evenement.motif }}</p>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li>Aucun événement enregistré.</li>
+                    {% endfor %}
+                </ol>
+            </section>
+            {% if commande.statut in ['en_attente', 'acceptee', 'en_preparation'] %}
+                <section class="menu-card" aria-labelledby="modification-equipe">
+                    <h2 id="modification-equipe">Modification après contact</h2>
+                    <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes_modifier', {id: commande.id}) }}">Modifier après contact avec le client</a>
+                </section>
+            {% endif %}
+            {% if commande.statut in ['en_attente', 'acceptee', 'en_preparation'] %}
+                <section class="menu-card commande-conditions" aria-labelledby="annulation-equipe">
+                    <h2 id="annulation-equipe">Annulation après contact</h2>
+                    <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes_annuler', {id: commande.id}) }}">Annuler après contact avec le client</a>
+                </section>
+            {% endif %}
+        </div>
+        <p><a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes') }}">Revenir à la liste des commandes</a></p>
     </main>
 {% endblock %}

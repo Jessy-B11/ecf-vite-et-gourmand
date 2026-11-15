@@ -1,40 +1,11 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}
-    Modifier la commande n°{{ commande.id }} — Gestion
-{% endblock %}
+{% block title %}Modifier la commande n°{{ commande.id }} — Gestion{% endblock %}
 
 {% block body %}
-    <main class="container">
+    <main class="container commande-page">
         <h1>Modifier la commande n°{{ commande.id }}</h1>
-
-        <p>
-            Client :
-            {{ commande.utilisateur.prenom }}
-            {{ commande.utilisateur.nom }}
-        </p>
-
-        <p>Email : {{ commande.utilisateur.email }}</p>
-
-        <p>
-            Téléphone actuel :
-            {{ commande.telephoneContact }}
-        </p>
-
-        <p>Menu conservé : {{ commande.menu.nom }}</p>
-
-        <p>
-            Contactez le client avant de préparer la modification.
-            L’enregistrement définitif nécessitera une confirmation.
-        </p>
-
-        {% if modificationForm.vars.submitted
-            and not modificationForm.vars.valid %}
-            <p class="form-error" role="alert">
-                Veuillez corriger les erreurs du formulaire.
-            </p>
-        {% endif %}
-
+        <p class="commande-introduction">Contactez le client avant de préparer la modification. L’enregistrement définitif nécessitera une confirmation.</p>
         {% if saisie_verifiee %}
             <p role="status">
                 La saisie du formulaire est valide.
@@ -44,42 +15,60 @@
             </p>
         {% endif %}
 
-        {{ form_start(modificationForm, {
-            attr: {class: 'registration-form'}
-        }) }}
 
+        {{ form_start(modificationForm, {
+            attr: modificationForm.vars.attr|merge({class: (modificationForm.vars.attr.class|default('') ~ ' registration-form commande-form')|trim})
+        }) }}
+        {% if modificationForm.vars.submitted and not modificationForm.vars.valid %}
+            <p class="form-error" role="alert">Veuillez corriger les erreurs du formulaire.</p>
+        {% endif %}
         {{ form_errors(modificationForm) }}
 
-        <h2>Informations de prestation</h2>
+        <div class="commande-layout">
+            <div class="commande-fields">
+                <section class="menu-card" aria-labelledby="prestation-modification">
+                    <h2 id="prestation-modification">Informations de prestation</h2>
+                    {{ form_row(modificationForm.adresseLivraison) }}
+                    <div class="commande-grid">
+                        {{ form_row(modificationForm.villeLivraison) }}
+                        {{ form_row(modificationForm.codePostalLivraison) }}
+                        {{ form_row(modificationForm.datePrestation) }}
+                        {{ form_row(modificationForm.heureLivraison) }}
+                    </div>
+                    <div class="commande-fields">
+                        {{ form_row(modificationForm.nombrePersonnes) }}
+                        {{ form_row(modificationForm.telephoneContact) }}
+                    </div>
+                </section>
+                <section class="menu-card" aria-labelledby="contact-modification">
+                    <h2 id="contact-modification">Contact préalable</h2>
+                    <div class="commande-fields">
+                        {{ form_row(modificationForm.modeContact) }}
+                        {{ form_row(modificationForm.motif) }}
+                        <div class="registration-terms">{{ form_row(modificationForm.clientContacte) }}</div>
+                        <button class="vg-btn" type="submit">Vérifier la saisie</button>
+                    </div>
+                </section>
+            </div>
 
-        {{ form_row(modificationForm.nombrePersonnes) }}
-        {{ form_row(modificationForm.datePrestation) }}
-        {{ form_row(modificationForm.heureLivraison) }}
-        {{ form_row(modificationForm.adresseLivraison) }}
-        {{ form_row(modificationForm.codePostalLivraison) }}
-        {{ form_row(modificationForm.villeLivraison) }}
-        {{ form_row(modificationForm.telephoneContact) }}
-
-        <h2>Contact préalable</h2>
-
-        {{ form_row(modificationForm.modeContact) }}
-        {{ form_row(modificationForm.motif) }}
-        {{ form_row(modificationForm.clientContacte) }}
-
-        <button class="vg-btn" type="submit">
-            Vérifier la saisie
-        </button>
-
+            <aside class="menu-card commande-summary" aria-labelledby="commande-actuelle">
+                <h2 id="commande-actuelle">Commande actuelle</h2>
+                <h3 class="menu-card-title">{{ commande.menu.nom }}</h3>
+                <p>Menu conservé</p>
+                <p>Client : {{ commande.utilisateur.prenom }} {{ commande.utilisateur.nom }}</p>
+                <p>Email : {{ commande.utilisateur.email }}</p>
+                <p>Téléphone actuel : {{ commande.telephoneContact }}</p>
+                <dl class="commande-amounts">
+                    <div><dt>Menu avant remise</dt><dd>{{ (commande.montantMenuCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                    <div><dt>Remise</dt><dd>{{ (commande.montantRemiseCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                    <div><dt>Livraison</dt><dd>{{ (commande.fraisLivraisonCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                    <div class="commande-total"><dt>Total enregistré</dt><dd>{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                </dl>
+                <p class="commande-note">Ces montants sont ceux de la commande actuelle. La vérification de la saisie préparera un récapitulatif avant l’enregistrement définitif.</p>
+            </aside>
+        </div>
         {{ form_end(modificationForm) }}
 
-        <p>
-            <a class="vg-btn vg-btn--secondaire"
-                href="{{ path('app_gestion_commandes_show', {
-                id: commande.id
-            }) }}"
-            >
-                Revenir au détail sans enregistrer
-            </a>
-        </p>
+        <p><a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes_show', {id: commande.id}) }}">Revenir au détail sans enregistrer</a></p>
     </main>
 {% endblock %}

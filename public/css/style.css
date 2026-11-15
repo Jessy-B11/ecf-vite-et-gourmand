@@ -870,6 +870,24 @@ h6 {
     gap: 16px;
 }
 
+.commande-page .registration-form select,
+.commande-page .registration-form textarea {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 12px;
+    border: 1px solid #ddb9bf;
+    border-radius: 8px;
+    background-color: var(--blanc);
+    color: var(--texte);
+    font: inherit;
+}
+
+.commande-page .registration-form :is(select, textarea):focus-visible {
+    outline: 2px solid var(--bordeaux);
+    outline-offset: 3px;
+}
+
 .commande-page .commande-summary h2,
 .commande-summary > p {
     margin: 0;

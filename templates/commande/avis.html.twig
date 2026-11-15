@@ -3,15 +3,21 @@
 {% block title %}Laisser un avis — Vite & Gourmand{% endblock %}
 
 {% block body %}
-    <main class="container">
-        <h1>Laisser un avis sur la commande n°{{ commande.id }}</h1>
-
-        {{ form_start(avisForm) }}
-            {{ form_row(avisForm.note) }}
-            {{ form_row(avisForm.commentaire) }}
-            <button class="vg-btn" type="submit">Envoyer mon avis</button>
-        {{ form_end(avisForm) }}
-
-        <p><a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes') }}">Retour à mes commandes</a></p>
+    <main class="container commande-page">
+        <section class="menu-card registration-card" aria-labelledby="avis-titre">
+            <h1 id="avis-titre">Laisser un avis sur la commande n°{{ commande.id }}</h1>
+            {{ form_start(avisForm, {
+                attr: avisForm.vars.attr|merge({class: (avisForm.vars.attr.class|default('') ~ ' registration-form registration-grouped')|trim})
+            }) }}
+                {% if avisForm.vars.submitted and not avisForm.vars.valid %}
+                    <p class="form-error" role="alert">Veuillez corriger les erreurs du formulaire.</p>
+                {% endif %}
+                {{ form_errors(avisForm) }}
+                {{ form_row(avisForm.note) }}
+                {{ form_row(avisForm.commentaire) }}
+                <button class="vg-btn" type="submit">Envoyer mon avis</button>
+            {{ form_end(avisForm) }}
+            <p><a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes') }}">Retour à mes commandes</a></p>
+        </section>
     </main>
 {% endblock %}
