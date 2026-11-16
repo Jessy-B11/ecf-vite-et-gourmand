@@ -58,6 +58,9 @@
                             <a href="{{ path('app_gestion_commandes') }}">
                                 Commandes
                             </a>
+                            <a href="{{ path('app_gestion_avis') }}"{% if app.request.attributes.get('_route') == 'app_gestion_avis' %} aria-current="page"{% endif %}>
+                                Modérer les avis
+                            </a>
                         {% endif %}
 
                         {% if is_granted('ROLE_ADMIN') %}
