@@ -158,7 +158,11 @@ try {
     verifier($connection->getParams()['driver'] === 'pdo_sqlite'
         && str_replace('\\', '/', $connection->getParams()['path']) === str_replace('\\', '/', $database),
         'Les tests doivent utiliser exclusivement la base temporaire.');
-    (new SchemaTool($entityManager))->createSchema([$entityManager->getClassMetadata(Utilisateur::class)]);
+    (new SchemaTool($entityManager))->createSchema([
+        $entityManager->getClassMetadata(Utilisateur::class),
+        $entityManager->getClassMetadata(\App\Entity\HoraireJour::class),
+        $entityManager->getClassMetadata(\App\Entity\CreneauHoraire::class),
+    ]);
     $hasher = $container->get(UserPasswordHasherInterface::class);
 
     foreach (['admin' => 'ROLE_ADMIN', 'employe' => 'ROLE_EMPLOYE', 'client' => 'ROLE_CLIENT'] as $name => $role) {

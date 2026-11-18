@@ -47,6 +47,10 @@ psql -h 127.0.0.1 -U vite_gourmand -d vite_et_gourmand -v ON_ERROR_STOP=1 -f sql
 psql -h 127.0.0.1 -U vite_gourmand -d vite_et_gourmand -v ON_ERROR_STOP=1 -f sql/02_donnees.sql
 ```
 
+`02_donnees.sql` initialise aussi les horaires avant son `COMMIT` final : lundi à vendredi, **09h00–12h00 et 14h00–18h00** ; samedi, **10h00–14h00** ; dimanche, **fermé**. Ce sont des **valeurs proposées pour le projet**, à faire valider avant de les présenter comme horaires réels.
+
+Pour une base locale ou Render **déjà initialisée**, ne rejoue pas tout `02_donnees.sql` : les autres insertions de données ne sont pas rejouables. Exécute uniquement le [bloc horaires autonome dans pgAdmin](docs/horaires-footer.md#bases-déjà-initialisées--bloc-pgadmin), dans le Query Tool de la base concernée. Ce bloc peut être rejoué : il conserve les jours et créneaux présents, et ne crée que les jours absents.
+
 ## 3. Configurer Symfony
 
 Crée `.env.local` à la racine. Remplace `MOT_DE_PASSE` et `VERSION_POSTGRES` dans l’URL. Pour connaître la version, exécute `SHOW server_version;` dans PostgreSQL et utilise sa partie numérique, par exemple `16.6`. Encode les caractères réservés du mot de passe dans l’URL si nécessaire.
@@ -121,4 +125,5 @@ php bin/console app:stats:sync
 - [Documentation du projet](docs/documentation-projet.md) et [dictionnaire de données](docs/dictionnaire-donnees.md)
 - [Statistiques MongoDB](docs/statistiques-nosql.md) et [actualisation automatique](docs/statistiques-automatiques.md)
 - [E-mails avec Mailpit et Brevo sur Render](docs/emails-brevo-render.md)
+- [Horaires du footer : fonctionnement, initialisation et bloc pgAdmin](docs/horaires-footer.md)
 - [Wireframes](docs/WireFrames.pdf), [maquettes en couleur](docs/Vite%20%26%20Gourmand%20%E2%80%94%20Mockups%20couleur.pdf) et [charte graphique](docs/Charte%20Graphique.pdf)

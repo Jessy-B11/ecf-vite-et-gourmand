@@ -111,4 +111,31 @@ VALUES (
     3
 )
 RETURNING id, nom;
+
+-- DEBUT HORAIRES PROPOSES POUR LE PROJET
+-- Valeurs proposées pour le projet, à faire valider avant de les présenter comme horaires réels.
+-- Lundi-vendredi : 09h00–12h00 et 14h00–18h00 ; samedi : 10h00–14h00 ; dimanche : fermé.
+-- Les jours existants et leurs créneaux sont conservés, même si aucun créneau n'est renseigné.
+LOCK TABLE horaire_jour, creneau_horaire IN SHARE ROW EXCLUSIVE MODE;
+
+WITH nouveaux_jours AS (
+    INSERT INTO horaire_jour (jour_semaine, ferme)
+    VALUES (1, FALSE), (2, FALSE), (3, FALSE), (4, FALSE),
+           (5, FALSE), (6, FALSE), (7, TRUE)
+    ON CONFLICT (jour_semaine) DO NOTHING
+    RETURNING id, jour_semaine
+)
+INSERT INTO creneau_horaire (horaire_jour_id, heure_ouverture, heure_fermeture)
+SELECT jour.id, creneau.ouverture, creneau.fermeture
+FROM nouveaux_jours jour
+JOIN (VALUES
+    (1, TIME '09:00', TIME '12:00'), (1, TIME '14:00', TIME '18:00'),
+    (2, TIME '09:00', TIME '12:00'), (2, TIME '14:00', TIME '18:00'),
+    (3, TIME '09:00', TIME '12:00'), (3, TIME '14:00', TIME '18:00'),
+    (4, TIME '09:00', TIME '12:00'), (4, TIME '14:00', TIME '18:00'),
+    (5, TIME '09:00', TIME '12:00'), (5, TIME '14:00', TIME '18:00'),
+    (6, TIME '10:00', TIME '14:00')
+) AS creneau(jour_semaine, ouverture, fermeture)
+    ON creneau.jour_semaine = jour.jour_semaine;
+-- FIN HORAIRES PROPOSES POUR LE PROJET
 COMMIT;

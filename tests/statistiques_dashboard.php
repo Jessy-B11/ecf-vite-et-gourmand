@@ -122,7 +122,11 @@ try {
     verifier($entityManager->getConnection()->getParams()['driver'] === 'pdo_sqlite'
         && str_replace('\\', '/', $entityManager->getConnection()->getParams()['path']) === str_replace('\\', '/', $sqlite),
         'Les tests ne doivent pas utiliser la base PostgreSQL de travail.');
-    (new SchemaTool($entityManager))->createSchema([$entityManager->getClassMetadata(Utilisateur::class)]);
+    (new SchemaTool($entityManager))->createSchema([
+        $entityManager->getClassMetadata(Utilisateur::class),
+        $entityManager->getClassMetadata(\App\Entity\HoraireJour::class),
+        $entityManager->getClassMetadata(\App\Entity\CreneauHoraire::class),
+    ]);
     $hasher = $container->get(UserPasswordHasherInterface::class);
     foreach (['admin' => 'ROLE_ADMIN', 'employe' => 'ROLE_EMPLOYE', 'client' => 'ROLE_CLIENT'] as $name => $role) {
         $user = (new Utilisateur())->setEmail($name . '@example.test')->setRoles([$role]);

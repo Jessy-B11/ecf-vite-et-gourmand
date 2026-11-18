@@ -99,6 +99,8 @@ try {
     (new SchemaTool($entityManager))->createSchema([
         $entityManager->getClassMetadata(Utilisateur::class),
         $entityManager->getClassMetadata(ResetPasswordRequest::class),
+        $entityManager->getClassMetadata(\App\Entity\HoraireJour::class),
+        $entityManager->getClassMetadata(\App\Entity\CreneauHoraire::class),
     ]);
     $client = (new Utilisateur())->setEmail('destinataire@example.test')->setPrenom('Camille')
         ->setNom('Test')->setPassword('hachage-fictif')->setRoles(['ROLE_CLIENT']);
