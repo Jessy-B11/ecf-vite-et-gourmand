@@ -49,7 +49,7 @@ psql -h 127.0.0.1 -U vite_gourmand -d vite_et_gourmand -v ON_ERROR_STOP=1 -f sql
 
 `02_donnees.sql` initialise aussi les horaires avant son `COMMIT` final : lundi à vendredi, **09h00–12h00 et 14h00–18h00** ; samedi, **10h00–14h00** ; dimanche, **fermé**. Ce sont des **valeurs proposées pour le projet**, à faire valider avant de les présenter comme horaires réels.
 
-Pour une base locale ou Render **déjà initialisée**, ne rejoue pas tout `02_donnees.sql` : les autres insertions de données ne sont pas rejouables. Exécute uniquement le [bloc horaires autonome dans pgAdmin](docs/horaires-footer.md#bases-déjà-initialisées--bloc-pgadmin), dans le Query Tool de la base concernée. Ce bloc peut être rejoué : il conserve les jours et créneaux présents, et ne crée que les jours absents.
+Pour une base locale ou Render **déjà initialisée**, ne rejoue pas tout `02_donnees.sql` : les autres insertions de données ne sont pas rejouables. Exécute uniquement le [bloc horaires autonome dans pgAdmin](docs/documentation-projet.md#horaires-pgadmin), dans le Query Tool de la base concernée. Ce bloc peut être rejoué : il conserve les jours et créneaux présents, et ne crée que les jours absents.
 
 ## 3. Configurer Symfony
 
@@ -123,7 +123,7 @@ php bin/console app:stats:sync
 ## Documentation du dépôt
 
 - [Documentation du projet](docs/documentation-projet.md) et [dictionnaire de données](docs/dictionnaire-donnees.md)
-- [Statistiques MongoDB](docs/statistiques-nosql.md) et [actualisation automatique](docs/statistiques-automatiques.md)
-- [E-mails avec Mailpit et Brevo sur Render](docs/emails-brevo-render.md)
-- [Horaires du footer : fonctionnement, initialisation et bloc pgAdmin](docs/horaires-footer.md)
+- [Statistiques MongoDB et actualisation automatique](docs/documentation-projet.md#statistiques-gerant)
+- [E-mails transactionnels](docs/documentation-projet.md#emails-transactionnels), [déploiement Render](docs/documentation-projet.md#deploiement-render) et [dépannage](docs/documentation-projet.md#depannage-services)
+- [Horaires du footer : fonctionnement, initialisation et bloc pgAdmin](docs/documentation-projet.md#horaires-footer)
 - [Wireframes](docs/WireFrames.pdf), [maquettes en couleur](docs/Vite%20%26%20Gourmand%20%E2%80%94%20Mockups%20couleur.pdf) et [charte graphique](docs/Charte%20Graphique.pdf)

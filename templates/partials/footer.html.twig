@@ -18,7 +18,7 @@
                                 Horaires non renseignés
                             {% else %}
                                 {% for creneau in horaire.creneaux %}
-                                    <span class="site-footer-slot">{{ creneau }}</span>
+                                    <span class="site-footer-slot">{{ creneau }}</span>{% if not loop.last %} / {% endif %}
                                 {% endfor %}
                             {% endif %}
                         </dd>

@@ -133,7 +133,7 @@ try {
     verifier(substr_count($catalogue, 'menu-card--catalogue') === 6, 'Six menus sont réellement rendus.');
     $multiple = lireFooter($catalogue);
     verifier($multiple['Dimanche'] === 'Fermé', 'Fermeture prioritaire même si un ancien créneau existe.');
-    verifier($multiple['Mardi'] === '09h00–12h00 14h00–18h00', 'Deux créneaux triés.');
+    verifier($multiple['Mardi'] === '09h00–12h00 / 14h00–18h00', 'Deux créneaux triés et séparés par une barre oblique.');
     page('/login', 'login');
     page('/menus', 'fragment', true);
 

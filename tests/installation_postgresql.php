@@ -49,10 +49,27 @@ try {
     $test->executeStatement($creation);
     verifier((int) $test->fetchOne('SELECT count(*) FROM horaire_jour') === 0, 'Le schéma initial est sans données horaires.');
     $test->executeStatement($donnees);
-    foreach (['theme' => 4, 'regime' => 3, 'menu' => 2, 'plat' => 3, 'menu_plat' => 3,
+    foreach (['theme' => 4, 'regime' => 3, 'menu' => 2, 'plat' => 6, 'menu_plat' => 6,
         'image_menu' => 1, 'horaire_jour' => 7, 'creneau_horaire' => 11] as $table => $attendu) {
         verifier((int) $test->fetchOne('SELECT count(*) FROM ' . $table) === $attendu, 'Données initiales : ' . $table);
     }
+    verifier($test->fetchFirstColumn("SELECT p.nom FROM plat p JOIN menu_plat mp ON mp.plat_id = p.id
+        JOIN menu m ON m.id = mp.menu_id WHERE m.nom = 'Menu de Noël vegan' ORDER BY p.id") === [
+        'Velouté de courge au lait de coco', 'Feuilleté aux champignons et lentilles', 'Poires pochées à la vanille',
+    ], 'Le menu vegan initial contient les trois recettes demandées.');
+    verifier($test->fetchAllAssociative("SELECT p.nom, a.libelle FROM plat_allergene pa
+        JOIN plat p ON p.id = pa.plat_id JOIN allergene a ON a.id = pa.allergene_id
+        JOIN menu_plat mp ON mp.plat_id = p.id JOIN menu m ON m.id = mp.menu_id
+        WHERE m.nom = 'Menu de Noël vegan'") === [
+        ['nom' => 'Feuilleté aux champignons et lentilles', 'libelle' => 'Gluten'],
+    ], 'Seul le feuilleté est associé au gluten dans la composition initiale.');
+    verifier((bool) preg_match('/-- DEBUT COMPOSITION MENU NOEL VEGAN(.*?)-- FIN COMPOSITION MENU NOEL VEGAN/s', $donnees, $composition),
+        'Le bloc de composition doit pouvoir être exécuté seul.');
+    $catalogue = static fn () => array_map(static fn ($table) => $test->fetchAllAssociative('SELECT * FROM ' . $table . ' ORDER BY 1, 2'),
+        ['menu', 'plat', 'menu_plat', 'allergene', 'plat_allergene']);
+    $avantComposition = $catalogue();
+    $test->executeStatement("BEGIN;\n" . $composition[1] . "\nCOMMIT;");
+    verifier($catalogue() === $avantComposition, 'Rejouer la composition conserve toutes les lignes du catalogue.');
     verifier(array_map('intval', $test->fetchFirstColumn('SELECT jour_semaine FROM horaire_jour ORDER BY jour_semaine'))
         === range(1, 7), 'Les sept jours sont créés.');
     verifier((int) $test->fetchOne('SELECT count(*) FROM horaire_jour WHERE jour_semaine = 7 AND ferme IS TRUE') === 1,
@@ -77,6 +94,7 @@ try {
         $test->fetchAllAssociative('SELECT * FROM creneau_horaire ORDER BY id'),
     ] === $avant, 'Rejouer le bloc horaires ne modifie aucune ligne installée.');
     echo "OK : base PostgreSQL réellement vide, installation complète 01_creation.sql puis 02_donnees.sql.\n";
+    echo "OK : composition du menu vegan, gluten sur le feuilleté et rejeu sans modification du catalogue.\n";
     echo "OK : données catalogue initiales, sept jours / onze créneaux, dimanche fermé ; rejeu du bloc horaires identique.\n";
 } catch (Throwable $e) {
     fwrite(STDERR, $e::class . ($e instanceof RuntimeException ? ': ' . $e->getMessage() : '') . PHP_EOL);

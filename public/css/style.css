@@ -361,9 +361,10 @@ h6 {
 
 .site-footer-content {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(19rem, 1.2fr) minmax(10rem, auto);
+    grid-template-columns: minmax(0, 1fr) minmax(24rem, 1.4fr) minmax(9rem, 0.65fr);
     align-items: start;
     gap: 32px;
+    padding-block: 32px;
 }
 
 .site-footer-content > * {
@@ -371,31 +372,42 @@ h6 {
     overflow-wrap: anywhere;
 }
 
+.site-footer-hours {
+    margin: 0;
+    padding: 0;
+}
+
 .site-footer-hours h2 {
-    margin: 0 0 16px;
+    margin: 0 0 12px;
     color: inherit;
-    font-size: 1.5rem;
+    font-size: 1.375rem;
     line-height: 1.3;
 }
 
 .site-footer-hours dl {
     display: grid;
-    gap: 8px;
+    gap: 4px;
     margin: 0;
+    padding: 0;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
 }
 
 .site-footer-hours dl > div {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
+    grid-template-columns: 5.5rem minmax(0, 1fr);
     gap: 12px;
 }
 
+.site-footer-hours dt,
 .site-footer-hours dd {
     margin: 0;
+    padding: 0;
+    min-width: 0;
 }
 
 .site-footer-slot {
-    display: block;
+    display: inline-block;
     white-space: nowrap;
 }
 
@@ -435,10 +447,15 @@ h6 {
     list-style: none;
 }
 
+.site-footer-links li {
+    margin: 0;
+    padding: 0;
+}
+
 @media (max-width: 900px) {
     .site-footer-content {
         grid-template-columns: minmax(0, 1fr);
-        gap: 24px;
+        gap: 20px;
     }
 }
 

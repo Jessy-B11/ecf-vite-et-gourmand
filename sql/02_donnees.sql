@@ -112,6 +112,62 @@ VALUES (
 )
 RETURNING id, nom;
 
+-- DEBUT COMPOSITION MENU NOEL VEGAN
+-- Bloc rejouable seul dans une transaction, après création du menu.
+-- Une recette est identifiée par nom, type et description : les variantes déjà présentes sont conservées.
+-- Les allergènes dépendent des ingrédients exacts des produits utilisés.
+LOCK TABLE menu, plat, menu_plat, allergene, plat_allergene IN SHARE ROW EXCLUSIVE MODE;
+
+DO $composition_vegan$
+DECLARE
+    menu_cible integer;
+    plat_cible integer;
+    gluten_id integer;
+    recette record;
+BEGIN
+    IF (SELECT count(*) FROM menu WHERE nom = 'Menu de Noël vegan') <> 1 THEN
+        RAISE EXCEPTION 'Un unique Menu de Noël vegan doit exister avant de compléter sa composition.';
+    END IF;
+    SELECT id INTO menu_cible FROM menu WHERE nom = 'Menu de Noël vegan';
+
+    -- Réutilise le libellé du catalogue ; nécessaire aussi sur une installation sans 03_menus_demo.sql.
+    INSERT INTO allergene (libelle) VALUES ('Gluten') ON CONFLICT (libelle) DO NOTHING;
+    SELECT id INTO gluten_id FROM allergene WHERE libelle = 'Gluten';
+
+    FOR recette IN
+        SELECT * FROM (VALUES
+            ('Velouté de courge au lait de coco',
+             'Courge, oignon, lait de coco et huile d’olive.', 'entree', FALSE),
+            ('Feuilleté aux champignons et lentilles',
+             'Pâte feuilletée végétale au blé, sans beurre, lait ni œufs, champignons, lentilles, oignon et herbes, accompagné de courge rôtie.',
+             'plat_principal', TRUE),
+            ('Poires pochées à la vanille',
+             'Poires, sucre, vanille et citron.', 'dessert', FALSE)
+        ) AS plats(nom, description, type, contient_gluten)
+    LOOP
+        SELECT id INTO plat_cible FROM plat
+        WHERE nom = recette.nom AND type = recette.type AND description = recette.description
+        ORDER BY id LIMIT 1;
+
+        IF plat_cible IS NULL THEN
+            INSERT INTO plat (nom, description, type)
+            VALUES (recette.nom, recette.description, recette.type)
+            RETURNING id INTO plat_cible;
+        END IF;
+
+        INSERT INTO menu_plat (menu_id, plat_id) VALUES (menu_cible, plat_cible)
+        ON CONFLICT (menu_id, plat_id) DO NOTHING;
+
+        IF recette.contient_gluten THEN
+            INSERT INTO plat_allergene (plat_id, allergene_id) VALUES (plat_cible, gluten_id)
+            ON CONFLICT (plat_id, allergene_id) DO NOTHING;
+        END IF;
+        -- Aucun allergène ajouté pour le velouté et les poires ; les associations existantes sont conservées.
+    END LOOP;
+END;
+$composition_vegan$;
+-- FIN COMPOSITION MENU NOEL VEGAN
+
 -- DEBUT HORAIRES PROPOSES POUR LE PROJET
 -- Valeurs proposées pour le projet, à faire valider avant de les présenter comme horaires réels.
 -- Lundi-vendredi : 09h00–12h00 et 14h00–18h00 ; samedi : 10h00–14h00 ; dimanche : fermé.

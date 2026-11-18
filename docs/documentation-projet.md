@@ -2,7 +2,7 @@
 
 **Auteur : Jessy Boehm**  
 **ECF : TP Développeur Web et Web Mobile — Studi**  
-**Version : 1.3 — 18 novembre 2026**  
+**Version : 1.4 — 18 novembre 2026**\
 **Remise annoncée : 19 novembre 2026**
 
 > Document de travail évolutif. Les sections « Réalisé » reposent sur les extraits de code et les essais partagés pendant le développement. Le dépôt complet n’a pas fait l’objet d’un audit indépendant. Une fonctionnalité prévue ou représentée dans une maquette n’est pas présentée comme développée. Les versions indiquées sont celles de l’environnement utilisé, sans affirmation sur les dernières versions disponibles.
@@ -97,7 +97,7 @@ Le chemin critique reste le parcours de commande, ses autorisations et ses règl
 | Symfony Security/Form/Validator | Centraliser authentification, formulaires et validations serveur | Rôles, propriété et règles métier doivent encore être programmés |
 | Symfony HttpClient | Appeler géocodage et itinéraire depuis PHP, avec délais et validation de réponse ; conserver les secrets côté serveur | Dépendance à des services externes ; disponibilité et quotas à gérer |
 | IGN pour le géocodage / OpenRouteService pour l’itinéraire | Proposer une adresse numérotée puis calculer une distance routière aller en voiture ; ORS retenu après des erreurs 404 IGN | Clé ORS locale, quotas, attribution à finaliser ; aucun fournisseur ne garantit à lui seul la démonstration hors réseau |
-| Symfony Mailer + Mailpit local | Tester les messages sans les envoyer aux destinataires réels | Un transport mail de production reste à choisir et tester |
+| Symfony Mailer + Mailpit local / Brevo HTTPS sur Render | Tester les messages en local puis envoyer par API HTTPS en production | Envoi direct ; pas de file persistante ni de réessai automatique. Configuration section 4.3 et fonctionnement section 7.4. |
 | SymfonyCasts ResetPasswordBundle | Parcours de jeton de réinitialisation avec expiration et usage unique | Configuration et tests des cas d’erreur à compléter |
 | MongoDB Atlas et bibliothèque PHP MongoDB | Fournir les données du graphique et du chiffre d’affaires. PostgreSQL conserve la référence des commandes. | Intégré et vérifié sur Render. |
 
@@ -120,7 +120,7 @@ Windows, VS Code, PowerShell intégré ; projet dans `C:\Env\Workspace\ECF\App E
 | Serveur local | PHP intégré, 127.0.0.1:8000, racine public/ |
 | Capture des mails | Mailpit : SMTP 127.0.0.1:1025, interface 127.0.0.1:8025 |
 
-Le port de l’interface pgAdmin est distinct du port PostgreSQL. Le serveur PHP intégré sert au développement local ; l’hébergement de production reste à configurer.
+Le port de l’interface pgAdmin est distinct du port PostgreSQL. Le serveur PHP intégré sert au développement local ; Render utilise l’image Docker du dépôt (section 13).
 
 Commandes locales déjà utilisées, depuis la racine du projet :
 
@@ -137,7 +137,47 @@ Mailpit est lancé dans un autre terminal :
 & "C:\Env\Mailpit\mailpit.exe"
 ```
 
-Variables locales : DATABASE_URL vers PostgreSQL, MAILER_DSN vers Mailpit et ORS_API_KEY. Les quatre variables LIVRAISON_DEPART_ADRESSE, LIVRAISON_DEPART_LONGITUDE, LIVRAISON_DEPART_LATITUDE et LIVRAISON_COMMUNE_GRATUITE sont des paramètres de démonstration partagés sans secret. Aucun mot de passe, jeton de réinitialisation ou secret réel ne doit être copié dans ce document. Le README versionné décrit le clonage, la configuration et l’import initial. Il reste à rejouer l’installation complète depuis un clone vierge. Le script optionnel `sql/03_menus_demo.sql` complète le catalogue.
+Les variables de livraison `ORS_API_KEY`, `LIVRAISON_DEPART_ADRESSE`, `LIVRAISON_DEPART_LONGITUDE`, `LIVRAISON_DEPART_LATITUDE`, `LIVRAISON_COMMUNE_GRATUITE` et `LIVRAISON_DISTANCE_MAX_METRES` gardent leur rôle décrit section 8. Le README fournit le clonage et l’import initial ; `sql/03_menus_demo.sql` complète le catalogue en option.
+
+<a id="configuration-services"></a>
+
+### 4.3 Configuration PostgreSQL, MongoDB et e-mails
+
+Les réglages propres au poste vont dans `.env.local`, ignoré par Git et par `.dockerignore`. Sur Render, les saisir dans les variables d’environnement du service web. Les noms ci-dessous et les exemples locaux sont publics ; aucune URI authentifiée, clé API ou valeur de `APP_SECRET` réelle ne doit être versionnée.
+
+| Variable | Local | Render |
+|---|---|---|
+| `APP_ENV`, `APP_DEBUG` | Développement ; valeurs propres au poste | `prod`, `0` |
+| `APP_SECRET` | Secret local non versionné | Secret du service, hors Git |
+| `DATABASE_URL` | PostgreSQL local ; valeur privée, avec version serveur et encodage adaptés | PostgreSQL Render : URL interne pour le service web ; URL externe depuis le PC |
+| `MONGODB_URI` | `mongodb://127.0.0.1:27017` | URI Atlas authentifiée, hors Git |
+| `MONGODB_DATABASE` | `vite_et_gourmand_stats` | Nom de la base de statistiques liée à cette source PostgreSQL |
+| `MAILER_DSN` | `smtp://127.0.0.1:1025` pour Mailpit | `brevo+api://VOTRE_CLE_API_BREVO@default` : exemple à remplacer par une clé **API** Brevo |
+| `MAILER_FROM_EMAIL` | `bonjour@vite-et-gourmand.example`, adresse fictive | Adresse d’expéditeur validée dans Brevo ; authentifier aussi son domaine |
+| `DEFAULT_URI` | URL locale du site, par exemple `http://127.0.0.1:8000` | URL publique HTTPS ; base des liens générés hors requête HTTP |
+
+Encoder les caractères réservés d’une clé avant de la placer dans le DSN. Le transport Mailer est sélectionné uniquement par `MAILER_DSN`. Le bridge `symfony/brevo-mailer` et `symfony/http-client` 7.4 sont des dépendances de production ; le service `http_client` est disponible pour les appels HTTPS Brevo à `https://api.brevo.com/v3/smtp/email`. Le bridge gère le POST, le JSON et l’en-tête d’authentification à partir du DSN.
+
+MongoDB utilise la bibliothèque officielle `mongodb/mongodb` et l’extension PHP `mongodb` 2.5.x. Le Dockerfile installe `pdo_pgsql` et `mongodb` **2.5.7** avant `composer install --no-dev`, afin que Composer puisse contrôler les extensions pendant le build. MongoDB doit accepter les mises à jour par pipeline (4.2 ou ultérieur) ; le Compose local utilise `mongo:8.0`.
+
+```powershell
+php --ri mongodb
+composer install
+docker compose -p vite-gourmand -f compose.mongodb.yaml up -d
+docker compose -p vite-gourmand -f compose.mongodb.yaml ps
+```
+
+Le Compose publie MongoDB seulement sur `127.0.0.1:27017`, avec un volume persistant et un contrôle de santé. Une base MongoDB distincte est nécessaire pour chaque base PostgreSQL source : des identifiants de commande peuvent être identiques entre environnements.
+
+Sous Windows, choisir une DLL correspondant à la version PHP, à x64 et au mode TS/NTS du PHP utilisé. Contrôler `php --ini` et `php --ri mongodb`. Une DLL locale peut être chargée ponctuellement sans modifier le `php.ini` global :
+
+```powershell
+$mongoExtension = (Get-ChildItem var/tools/mongodb-2.5.7 -Filter '*.dll').FullName
+php -d "extension=$mongoExtension" bin/console app:stats:sync
+php -d "extension=$mongoExtension" -S 127.0.0.1:8000 -t public
+```
+
+Le dossier `var/` est ignoré par Git ; sur un autre poste, télécharger une DLL adaptée depuis les releases officielles référencées en section 15.7. L’extension doit être active dans **le PHP CLI et le PHP web** : sous Apache/Wamp, modifier la configuration utilisée par Apache puis redémarrer ce service. Dans un conteneur, `127.0.0.1` désigne le conteneur lui-même ; pour joindre le poste Docker Desktop, utiliser `host.docker.internal`, ou le nom du service MongoDB sur un réseau Docker partagé. Mailpit doit fonctionner avant les parcours locaux d’envoi.
 
 ## 5. Architecture et organisation du code
 
@@ -151,6 +191,10 @@ Le navigateur appelle une route Symfony. Le contrôleur lit et valide la demande
 | src/Controller/SecurityController.php | Affichage connexion et route de déconnexion |
 | src/Controller/RegistrationController.php | Inscription, hachage et persistance puis email/connexion |
 | src/Controller/ResetPasswordController.php | Demande du lien, confirmation et changement du mot de passe |
+| src/Service/EmailCreationEmploye.php | Notification après création du compte, sans mot de passe ; récupération des erreurs dans AdminEmployeController |
+| src/Service/SynchronisationStatistiques.php et ActualisationStatistiquesCommande.php | Projection MongoDB complète/ciblée, protection par révision et journalisation après commit |
+| src/Command/StatsSyncCommand.php | Import initial et rattrapage PostgreSQL vers MongoDB |
+| src/Controller/AdminStatistiquesController.php et src/Service/StatistiquesCommandes.php | Accès gérant, validation des filtres et agrégations MongoDB |
 | src/Form/ | Formulaires d’inscription et réinitialisation |
 | src/Security/UtilisateurChecker.php | Refus d’une connexion pour compte inactif |
 | src/Service/EmailBienvenue.php | Message de bienvenue |
@@ -238,6 +282,32 @@ La table commande possède désormais `jeton_validation VARCHAR(32) UNIQUE`, ajo
 - Mettre à jour le modèle de données et les schémas avec `commande.version_statistiques` et la collection de statistiques MongoDB décrite en section 7.8.
 - Actualiser le dictionnaire pour les comptes/reset et les décisions finales.
 
+<a id="projection-mongodb"></a>
+
+### 6.5 Projection MongoDB et migration de révision
+
+La collection `commandes`, dans `MONGODB_DATABASE`, est une projection de l’état courant des commandes SQL, pas un journal de transitions. `SynchronisationStatistiques` sélectionne explicitement les seuls champs utiles :
+
+| Champ MongoDB | Source et type |
+|---|---|
+| `_id` | Identifiant entier PostgreSQL de la commande, clé stable unique |
+| `menu.id`, `menu.nom` | Identifiant et nom **courant** du menu lié ; le nom n’est pas historisé en SQL |
+| `nombre_personnes` | Effectif enregistré sur la commande |
+| `date_creation` | Date/heure de création en BSON `UTCDateTime` |
+| `date_prestation` | Jour civil `YYYY-MM-DD`, sans conversion de fuseau |
+| `statut` | `en_attente`, `acceptee`, `en_preparation`, `en_livraison`, `livree`, `attente_retour_materiel`, `terminee` ou `annulee` |
+| `montant_menu_centimes`, `montant_remise_centimes` | Montant et remise historiques enregistrés sur `commande` |
+| `frais_livraison_centimes`, `montant_total_centimes` | Livraison et total historiques de la commande |
+| `version_source` | Révision issue de `commande.version_statistiques` |
+
+Les montants sont des entiers en centimes ; ils ne sont jamais recalculés depuis `menu.prix_minimum_centimes`. Identité, adresse, téléphone, identifiant utilisateur et jetons restent dans PostgreSQL. Le remplacement d’un document enlève aussi les anciens champs hors de cette projection.
+
+La migration additive `Version20261112000000` ajoute `version_statistiques BIGINT NOT NULL DEFAULT 1`, la fonction `incrementer_version_statistiques_commande()` et le trigger `commande_version_statistiques`. Chaque `UPDATE` de commande incrémente cette révision en base. Doctrine la mappe comme valeur générée, non insérable et non modifiable ; ce mécanisme n’ajoute pas de verrouillage optimiste aux règles métier. **La migration reste nécessaire après reconstruction par les scripts SQL initiaux.** Les commandes de déploiement sont en section 13.
+
+Une pipeline conditionnelle `updateOne` avec `upsert: true`, filtrée sur `_id`, compare atomiquement la révision et remplace le document seulement si sa révision source est au moins égale à celle stockée. Un état ancien ne peut pas écraser une commande plus récente ; une révision identique est rejouable sans doublon. Un document ancien sans révision est traité comme antérieur à la révision 1. `$literal` protège les noms de menus contenant un dollar. Les écritures sont acquittées avec `WriteConcern::MAJORITY` avant d’être comptées comme réussies.
+
+Les suppressions SQL ne sont pas propagées. La projection n’exclut aucun statut ; c’est l’agrégation du tableau de bord qui applique les règles de CA (section 7.8).
+
 ## 7. Fonctionnalités réalisées
 
 ### 7.1 Catalogue et détail
@@ -260,13 +330,28 @@ L’inscription collecte nom, prénom, téléphone, email et adresse. Les valida
 
 L’email est unique dans la base et contrôlé par UniqueEntity pour donner un message compréhensible. La connexion utilise email/mot de passe, form_login et un jeton CSRF. Le compte inactif est refusé par un user checker. La déconnexion est prise en charge par le firewall. La révocation d’une session déjà ouverte lors d’une désactivation reste à vérifier.
 
-### 7.4 Emails et réinitialisation
+<a id="emails-transactionnels"></a>
 
-Après une inscription valide, EmailBienvenue envoie le message ; une erreur de transport est journalisée sans annuler le compte créé. En local, Mailpit capture les messages. L’adresse d’expéditeur en .example est une donnée de démonstration à remplacer pour la production.
+### 7.4 E-mails transactionnels et réinitialisation
 
-Le reset comporte une demande par email, une confirmation générique, un lien avec jeton, une saisie répétée du nouveau mot de passe puis un retour vers la connexion. Le jeton est stocké en session après ouverture pour être retiré de l’URL. Le mot de passe est haché et la demande de reset supprimée lors de la validation. Les quatre templates request/check_email/email/reset sont traduits ; vérifier la langue globale des messages de durée.
+Symfony Mailer utilise Mailpit en local et l’API HTTPS Brevo sur Render selon la configuration de la section 4.3. Tous les expéditeurs lisent `MAILER_FROM_EMAIL` et gardent le nom **Vite & Gourmand**, y compris `ResetPasswordController`.
 
-Réception du mail, changement, connexion avec le nouveau mot de passe et refus du lien déjà utilisé ont été confirmés. L’ancien mot de passe n’a pas été retesté car il avait été oublié. L’expiration effective, les erreurs SMTP et la réponse pour une adresse inconnue restent à contrôler.
+| Message | Déclenchement et contenu |
+|---|---|
+| `EmailBienvenue` | Après persistance de l’inscription ; confirmation de création du compte |
+| `EmailConfirmationCommande` | Après commit d’une nouvelle commande ; référence, prestation et montants enregistrés. Le renvoi du même brouillon ne renvoie pas le mail (section 8.5). |
+| `EmailInvitationAvis` | Après transition réussie vers `terminee`, sans prêt ou après restitution ; lien absolu vers le formulaire de la commande |
+| `EmailRetourMateriel` | Après nouveau passage en `attente_retour_materiel` ; rappel du matériel à restituer (section 8.13) |
+| `EmailCreationEmploye` | Après persistance du compte par le gérant ; lien de connexion et demande de récupérer le mot de passe initial auprès du gérant, **sans mot de passe ni hachage dans le mail** |
+| Réinitialisation | `ResetPasswordController`, modèle `reset_password/email.html.twig` ; lien de changement à jeton |
+
+Messenger n’est pas installé et aucun transport de messages ni worker Render n’est configuré. `config/packages/mailer.yaml` impose en plus `framework.mailer.message_bus: false` sous `when@prod`. L’envoi est donc direct pendant la requête, sans worker nécessaire pour ces e-mails, même si Messenger est ajouté pour un autre usage. Il n’existe ni file persistante, ni réessai automatique, ni garantie de réception dans la boîte du destinataire.
+
+Les erreurs de transport de bienvenue, confirmation, invitation et retour de matériel sont interceptées et journalisées sans annuler les écritures SQL déjà effectuées. Pour la création d’employé, le Mailer est résolu à la demande **après** l’enregistrement : toute erreur de notification, y compris un DSN invalide, conserve le compte et la redirection avec un avertissement distinct au gérant. Le journal de ce parcours ne contient que l’identifiant utilisateur et la classe d’erreur. Une validation refusée ou une adresse déjà utilisée ne déclenche aucune notification.
+
+Le reset conserve la réponse générique pour une adresse inconnue ou une demande non générée. Après ouverture du lien, le jeton est gardé en session pour être retiré de l’URL ; le nouveau mot de passe est saisi deux fois, haché, puis la demande de reset est supprimée. Les templates `request`, `check_email`, `email` et `reset` sont traduits. Le contrôleur appelle actuellement `Mailer::send` sans interception dédiée des erreurs de transport : ne pas lui attribuer le comportement de récupération propre à la création d’employé.
+
+Réception du lien, changement, connexion avec le nouveau mot de passe et refus du lien déjà utilisé ont été confirmés lors de la recette initiale. L’ancien mot de passe n’avait pas été retesté car il avait été oublié ; l’expiration effective, la panne transport et la réponse pour une adresse inconnue restent à vérifier dans la recette navigateur. Réinitialisation et notification employé ont aussi été reçues sur Render selon les recettes consignées en section 11.8 ; la notification employé est arrivée dans les indésirables. Ces résultats ne prouvent pas la réception de tous les autres types de messages. Les vérifications automatisées, la recette complémentaire et le dépannage sont regroupés en sections 11.3 et 13.
 
 ### 7.5 Avis et accueil public
 
@@ -274,7 +359,7 @@ Réception du mail, changement, connexion avec le nouveau mot de passe et refus 
 - Doctrine mappe `Avis` sur `public.avis`. La contrainte UNIQUE sur `commande_id` garantit un avis maximum par commande. Les contraintes PostgreSQL contrôlées dans pgAdmin imposent une note de 1 à 5, un commentaire non vide après retrait des espaces et l’un des statuts `en_attente`, `valide`, `refuse`. Un dépôt démarre à `en_attente`.
 - `/gestion/avis` présente les avis en attente aux employés actifs. Les deux actions POST, protégées par CSRF, mettent à jour la ligne seulement si son statut est encore `en_attente`. Un second envoi depuis un formulaire périmé ne remplace pas la première décision.
 - L’accueil public GET `/` affiche la présentation de Julie et José, une sélection de menus disponibles, puis jusqu’à six avis `valide`, du plus récent au plus ancien. Render affichait un état vide pour les avis lors du contrôle. Le dépôt et la modération sont décrits dans les sections précédentes.
-- `EmailInvitationAvis` est appelé après un changement réussi vers `terminee`, depuis `suivi()` pour la terminaison sans prêt ou depuis `retourMateriel()` après restitution. Le mail texte contient un lien absolu vers le formulaire de la commande. La réception dans Mailpit est confirmée. La production SMTP, la reprise d’un envoi échoué et le suivi de réception restent hors de cette validation locale.
+- `EmailInvitationAvis` est appelé après un changement réussi vers `terminee`, depuis `suivi()` pour la terminaison sans prêt ou depuis `retourMateriel()` après restitution. Le mail texte contient un lien absolu vers le formulaire de la commande. La réception dans Mailpit est confirmée. La réception réelle de ce type de message sur Render reste à consigner ; les transports et limites de reprise sont décrits en section 7.4.
 
 ### 7.6 Gérant, employés et clients de démonstration
 
@@ -297,15 +382,32 @@ La branche `develop` contient la mise en forme des étapes de commande, de la co
 
 Dans `templates/commande/avis.html.twig`, le formulaire Symfony existant est rendu dans une carte avec une note, un commentaire, des erreurs et une action de retour. La branche à `3eae360` contient déjà une version en carte. Le dernier prompt prévoit de mieux espacer les labels et d’élargir le commentaire. Le résultat de cette finition et son déploiement restent à confirmer.
 
+<a id="statistiques-gerant"></a>
+
 ### 7.8 Statistiques du gérant
 
-La route `/admin/statistiques` est réservée à `ROLE_ADMIN`. Elle lit MongoDB Atlas pour afficher un graphique et un tableau du nombre de commandes par menu, tous statuts confondus. Le chiffre d’affaires retient les commandes terminées et leur montant historique après remise, hors livraison. Les filtres portent sur le menu et les dates de création. Les deux dates sont inclusives dans le fuseau Europe/Paris. Les calculs utilisent les centimes et l’affichage convertit en euros.
+`/admin/statistiques` et le lien de navigation sont réservés à `ROLE_ADMIN`, avec `IsGranted` côté serveur et contrôle du compte actif. Le contrôleur `AdminStatistiquesController` et le service `StatistiquesCommandes` lisent exclusivement MongoDB pour les chiffres et les options de menus. PostgreSQL sert toujours à l’authentification et aux horaires du footer, pas au calcul des statistiques. Ouvrir la page ne lance aucune synchronisation ni écriture.
 
-La projection MongoDB contient un document par commande. Son `_id` est l’identifiant PostgreSQL de la commande. Le document conserve le menu, les dates, le statut, les montants historiques et la révision. Les données personnelles restent dans PostgreSQL.
+#### Tableau de bord et règles du chiffre d’affaires
 
-La migration `Version20261112000000` ajoute `commande.version_statistiques` (`BIGINT NOT NULL DEFAULT 1`). Un déclencheur PostgreSQL incrémente la révision lors d’une modification. L’application relit la commande après validation de la transaction et projette son état vers MongoDB. Une écriture ancienne est rejetée si une révision plus récente existe déjà. Une panne MongoDB est journalisée sans identifiants et la transaction métier reste enregistrée. La commande `app:stats:sync` permet l’import initial et le rattrapage sans doublon. Le lot ne propage pas les suppressions SQL.
+- Le graphique HTML/CSS et son tableau comptent les commandes par identifiant de menu, **tous statuts et toutes dates confondus**. Aucune bibliothèque JavaScript externe n’est nécessaire.
+- Les paramètres GET `menu`, `debut` et `fin` filtrent **uniquement le CA**, pas le graphique global.
+- Seul le statut `terminee` entre dans le CA. Une commande livrée, en attente de retour du matériel ou annulée est exclue.
+- Pour chaque commande retenue : `montant_menu_centimes - montant_remise_centimes`, **hors frais de livraison**, depuis les montants historiques. Les sommes MongoDB et le total PHP restent en centimes ; Twig convertit uniquement pour l’affichage en euros.
+- La période porte sur `date_creation`, et non sur `date_prestation`. Les deux dates sont inclusives dans le fuseau **Europe/Paris** : minuit du début inclus, minuit du lendemain de la fin exclu. Le lendemain est calculé en **jour civil**, même lors des journées de 23 ou 25 heures. Chaque borne peut rester vide.
+- Paramètre non scalaire, menu absent/invalide, date impossible ou période inversée : réponse **400**, erreurs lisibles et aucun CA non filtré trompeur. Résultat vide : **200**, message explicite et total nul. Extension manquante ou MongoDB inaccessible : **503** et message distinct, sans afficher d’exception brute ni présenter la panne comme un CA nul.
 
-Voir `docs/statistiques-nosql.md`, `docs/statistiques-tableau-de-bord.md` et `docs/statistiques-automatiques.md` dans le dépôt.
+Le graphique, les tableaux et les filtres sont présentés dans des sections distinctes ; le tableau de CA peut défiler horizontalement au clavier sur mobile. Le schéma de projection et les garanties de révision sont décrits en section 6.5.
+
+#### Actualisation après validation PostgreSQL
+
+Neuf services appellent `ActualisationStatistiquesCommande::apresValidation` après le retour réussi de `EntityManager::wrapInTransaction`, donc après flush **et commit** : `EnregistrementCommande`, `AcceptationCommande`, `SuiviCommande`, `RetourMaterielCommande`, `AnnulationCommande`, `AnnulationCommandeEquipe`, `ModificationCommande`, `ModificationCommandeEquipe` et `PretMaterielCommande`.
+
+La méthode ciblée `SynchronisationStatistiques::synchroniserCommande` reçoit uniquement l’identifiant de la commande effectivement créée ou retrouvée et relit l’état SQL validé : menu courant, statut, dates et montants. Elle n’utilise ni un ancien objet ORM ni un récapitulatif de session. Les écrans actuels de modification conservent le menu ; les setters de menu des contrôleurs concernent les brouillons de nouvelles commandes.
+
+Une action idempotente tente aussi la projection pour rattraper un échec précédent sur cette commande. Un commit SQL refusé ne déclenche aucun appel MongoDB. Une connexion encore en transaction est refusée par la méthode ciblée : si un futur appel ajoute une transaction englobante, il faudra déclencher la projection après son commit extérieur ou utiliser le rattrapage CLI.
+
+Un échec automatique ne remet pas en cause la commande ou l’action déjà enregistrée dans PostgreSQL. Le journal garde un message fixe, l’identifiant de commande et la classe d’erreur, sans URI, message brut ni objet exception. Un arrêt du processus entre commit et projection laisse également une écriture à rattraper. La procédure unique d’import et de rattrapage `app:stats:sync` figure en section 13.
 
 ## 8. Commandes : fonctionnement actuel et règles restantes
 
@@ -365,7 +467,7 @@ Tests confirmés : commande n°1, 4 personnes, menu 12000 centimes, remise 0, li
 
 ### 8.5 Confirmation par email
 
-EmailConfirmationCommande et templates/emails/confirmation_commande.html.twig construisent un TemplatedEmail contenant référence, état en attente, prestation, adresse, menu, remise, livraison et total enregistrés. L’expéditeur bonjour@vite-et-gourmand.example est réservé à la démonstration Mailpit et devra être remplacé en production.
+EmailConfirmationCommande et templates/emails/confirmation_commande.html.twig construisent un TemplatedEmail contenant référence, état en attente, prestation, adresse, menu, remise, livraison et total enregistrés. L’expéditeur vient de `MAILER_FROM_EMAIL`, selon la configuration locale/Render de la section 4.3.
 
 Le contrôleur appelle le service après la transaction, uniquement si l’objet retourné est le nouvel objet Commande (`$commandeEnregistree === $commande`). Le retour d’une commande existante ne redéclenche pas l’envoi. Un TransportExceptionInterface est journalisé avec référence de commande ; l’échec SMTP ne remet pas en cause l’enregistrement. Cette solution synchrone n’est pas une garantie de livraison du mail au destinataire et n’est pas une file d’attente.
 
@@ -443,7 +545,7 @@ Avec prêt, livree → attente_retour_materiel est ajouté à SuiviCommande. Le 
 
 Diagnostic corrigé : l’appel email avait été collé dans catch ; il n’était jamais exécuté lors d’une transition réussie et utilisait potentiellement une variable non définie. L’appel est désormais après le catch, avant le flash de succès. Des accolades mal placées ont ensuite été corrigées par remplacement complet du contrôleur. php -l valide la syntaxe ; la réception dans Mailpit a confirmé le fonctionnement.
 
-EmailRetourMateriel reprend Mailer/TemplatedEmail, expéditeur local .example et Logger. Un TransportExceptionInterface est journalisé sans annuler le statut déjà enregistré. Mailpit doit tourner avant le clic : démarrer le SMTP après un échec ne relance pas le mail. Aucun mécanisme de reprise/outbox ni garantie de réception client réelle n’existe. Le booléen modifiee évite l’envoi sur un renvoi sans transition ; un test dédié de double mail et une panne SMTP propres à ce nouveau service restent à consigner. Ne pas revenir artificiellement en arrière en SQL pour simuler une reprise.
+EmailRetourMateriel reprend Mailer/TemplatedEmail, l’expéditeur configuré dans `MAILER_FROM_EMAIL` et Logger. Un TransportExceptionInterface est journalisé sans annuler le statut déjà enregistré. Mailpit doit tourner avant le clic : démarrer le SMTP après un échec ne relance pas le mail. Aucun mécanisme de reprise/outbox ni garantie de réception client réelle n’existe. Le booléen modifiee évite l’envoi sur un renvoi sans transition ; un test dédié de double mail et une panne SMTP propres à ce nouveau service restent à consigner. Ne pas revenir artificiellement en arrière en SQL pour simuler une reprise.
 
 Tests confirmés : état attente_retour_materiel, historique/auteur, matériel=true, date_retour_materiel NULL, stock constant et mail reçu dans Mailpit pour la bonne commande.
 
@@ -469,9 +571,11 @@ L’employé peut annuler ou modifier une commande via des parcours dédiés apr
 
 Gestion du catalogue et des horaires, désactivation des employés, échéance de retour en jours ouvrés, retards et procédure de frais. La notification de création d’employé a été reçue sur Render. Le lot de lecture et affichage des horaires est livré et testé localement selon le compte rendu de Codex. Les horaires ont été validés par Jessy pour le projet. Le regroupement SQL et le chargement sur Render restent à confirmer. Rejouer les contrôles de rôles, les demandes concurrentes et l’installation sur un environnement neuf lors de la recette finale.
 
-### 8.18 Horaires du footer validés pour le projet
+<a id="horaires-footer"></a>
 
-Le 18 novembre, Jessy a retenu les horaires suivants pour Vite & Gourmand.
+### 8.18 Horaires du footer
+
+Le 18 novembre, Jessy a retenu les horaires suivants pour le projet pédagogique. Ce sont des **valeurs proposées pour le projet**, à faire valider avant de les présenter comme horaires réels.
 
 | Jour | Horaires retenus pour le projet |
 |---|---|
@@ -483,11 +587,75 @@ Le 18 novembre, Jessy a retenu les horaires suivants pour Vite & Gourmand.
 | Samedi | 10h00–14h00 |
 | Dimanche | Fermé |
 
-Le lot livré lit PostgreSQL et affiche les sept jours dans le footer commun, avec plusieurs créneaux possibles, les états « Fermé » et « Horaires non renseignés ». Le compte rendu de Codex annonce une requête jointe par page, quel que soit le nombre de menus. Il mentionne deux mappings Doctrine, un repository, une extension Twig, le footer, le CSS et les tests. Le détail de l’implémentation figure dans `docs/horaires-footer.md` sur le poste de développement.
+#### Lecture et affichage
 
-Les tests rapportés couvrent SQLite et PostgreSQL temporaires, le rejeu SQL, six états à 390 et 1440 px, l’absence de débordement, la syntaxe PHP, le mapping Doctrine, les 34 templates Twig et les conteneurs de développement et de production. Ces résultats viennent du compte rendu de Codex transmis par Jessy.
+Les tables `horaire_jour` et `creneau_horaire`, définies dans `sql/01_creation.sql`, restent la source. Les entités `HoraireJour` et `CreneauHoraire` les mappent sans nouvelle migration. `HoraireJourRepository::findSemaineAvecCreneaux()` charge les jours et créneaux en **une requête jointe**, triée par jour puis heures d’ouverture/fermeture. Les contrôleurs n’ont pas à charger les horaires.
 
-La décision suivante consiste à regrouper les horaires initiaux dans `sql/02_donnees.sql`, puis à supprimer le fichier séparé d’horaires. Les tables restent définies dans `sql/01_creation.sql`. Le retour de Codex confirmant ce regroupement est attendu. Pour une installation neuve, la procédure prévue est d’exécuter 01 puis 02. Pour une base déjà utilisée, le bloc d’insertion des horaires sera exécuté directement dans pgAdmin après vérification de la base cible, afin de conserver les données existantes.
+`HorairesExtension`, autoconfigurée par Symfony, expose `horaires_footer()`, appelée dans `templates/partials/footer.html.twig`. Elle construit toujours sept jours français, de lundi (1) à dimanche (7). Les colonnes SQL `TIME` sont des heures locales, formatées `09h00–12h00` sans conversion de fuseau :
+
+- Un jour fermé affiche **Fermé**, même si d’anciens créneaux subsistent.
+- Un jour ouvert affiche tous ses créneaux, dans l’ordre.
+- Un jour absent ou ouvert sans créneau affiche **Horaires non renseignés**.
+
+Une `WeakMap` mémorise le résultat pour la requête principale : plusieurs appels dans cette requête ne refont pas la lecture, et la requête suivante relit PostgreSQL sans cache persistant à invalider. Le nombre de menus n’ajoute aucune requête horaire. Le filtrage JavaScript actuel du catalogue renvoie aussi une page complète, donc une seule lecture des horaires pour cette réponse.
+
+Le footer bordeaux conserve marque et liens, avec trois colonnes sur grand écran ; ses blocs s’empilent à 900 px et moins et les jours/heures restent alignés. Aucune écriture automatique ni interface de modification n’est ajoutée. `DATABASE_URL` est réutilisée, sans nouvelle variable ni dépendance Composer.
+
+#### Initialisation et conservation des données
+
+Le bloc horaires est désormais dans `sql/02_donnees.sql`, avant le `COMMIT` final. Sur une base vide, il crée **sept jours et onze créneaux** dans la transaction des données initiales. Exécuter `01_creation.sql` puis `02_donnees.sql` avec `psql -v ON_ERROR_STOP=1 -f ...`, ou dans le Query Tool pgAdmin, selon la procédure du README. Appliquer ensuite la migration de révision des commandes (sections 6.5 et 13).
+
+`ON CONFLICT (jour_semaine) DO NOTHING` conserve les jours présents ; `RETURNING` transmet seulement les jours nouvellement insérés à l’ajout des créneaux. Un jour existant sans créneau reste sans créneau ; son état fermé et ses créneaux ne sont pas remplacés. Le verrou de transaction sérialise les écritures dans les deux tables. **Seul le bloc horaires est rejouable ; le fichier `02_donnees.sql` complet ne l’est pas.**
+
+<a id="horaires-pgadmin"></a>
+
+#### Bases déjà initialisées : bloc SQL pour pgAdmin
+
+Sur la base locale existante ou PostgreSQL Render, ouvrir le **Query Tool de la base concernée**, vérifier `SELECT current_database();`, puis exécuter uniquement ce bloc. Les deux tables doivent déjà exister. Depuis le PC, Render utilise les paramètres de connexion externes et TLS ; autoriser l’accès réseau concerné. Les identifiants restent hors Git (section 4.3).
+
+```sql
+BEGIN;
+
+-- DEBUT HORAIRES PROPOSES POUR LE PROJET
+-- Valeurs proposées pour le projet, à faire valider avant de les présenter comme horaires réels.
+-- Lundi-vendredi : 09h00–12h00 et 14h00–18h00 ; samedi : 10h00–14h00 ; dimanche : fermé.
+-- Les jours existants et leurs créneaux sont conservés, même si aucun créneau n'est renseigné.
+LOCK TABLE horaire_jour, creneau_horaire IN SHARE ROW EXCLUSIVE MODE;
+
+WITH nouveaux_jours AS (
+    INSERT INTO horaire_jour (jour_semaine, ferme)
+    VALUES (1, FALSE), (2, FALSE), (3, FALSE), (4, FALSE),
+           (5, FALSE), (6, FALSE), (7, TRUE)
+    ON CONFLICT (jour_semaine) DO NOTHING
+    RETURNING id, jour_semaine
+)
+INSERT INTO creneau_horaire (horaire_jour_id, heure_ouverture, heure_fermeture)
+SELECT jour.id, creneau.ouverture, creneau.fermeture
+FROM nouveaux_jours jour
+JOIN (VALUES
+    (1, TIME '09:00', TIME '12:00'), (1, TIME '14:00', TIME '18:00'),
+    (2, TIME '09:00', TIME '12:00'), (2, TIME '14:00', TIME '18:00'),
+    (3, TIME '09:00', TIME '12:00'), (3, TIME '14:00', TIME '18:00'),
+    (4, TIME '09:00', TIME '12:00'), (4, TIME '14:00', TIME '18:00'),
+    (5, TIME '09:00', TIME '12:00'), (5, TIME '14:00', TIME '18:00'),
+    (6, TIME '10:00', TIME '14:00')
+) AS creneau(jour_semaine, ouverture, fermeture)
+    ON creneau.jour_semaine = jour.jour_semaine;
+-- FIN HORAIRES PROPOSES POUR LE PROJET
+
+COMMIT;
+```
+
+Contrôler le résultat avec :
+
+```sql
+SELECT h.jour_semaine, h.ferme, c.heure_ouverture, c.heure_fermeture
+FROM horaire_jour h
+LEFT JOIN creneau_horaire c ON c.horaire_jour_id = h.id
+ORDER BY h.jour_semaine, c.heure_ouverture, c.heure_fermeture;
+```
+
+Déployer les fichiers PHP/Twig/CSS avec l’application et reconstruire le cache prod selon la section 13 si le déploiement ne le fait pas déjà. Contrôler `/`, `/menus` et `/login` : sept jours, valeurs, fermeture et empilement mobile. Les changements SQL sont visibles dès la requête suivante. Les vérifications isolées et les résultats déjà rapportés figurent en section 11.4.
 
 Le chargement local des horaires choisis et leur déploiement sur PostgreSQL Render restent à confirmer. L’interface employé de modification des horaires reste à développer. Les horaires inscrits ici sont ceux retenus pour le projet pédagogique.
 
@@ -596,7 +764,7 @@ Le chargement effectif des polices et l’harmonisation finale du site sont enco
 | Concurrence réelle | Non validée | Distinguer les essais séquentiels par onglets d’un vrai test simultané |
 | Accessibilité globale | À valider | Recette nécessaire |
 
-Aucune suite complète de tests automatisés n’est livrée à ce stade. Prévoir des tests utiles sur calculs, seuils, transitions, propriété et concurrence ; les compléter avec les parcours manuels et leurs résultats datés.
+Des scripts de tests ciblés sont livrés, notamment pour les statistiques, les e-mails et la création d’employé (section 11.3). Ils ne constituent pas une suite exhaustive : les compléter avec les parcours manuels et leurs résultats datés, notamment sur seuils, transitions, propriété et concurrence.
 
 ### 11.1 Vérifications depuis le 8 novembre
 
@@ -616,6 +784,73 @@ Aucune suite complète de tests automatisés n’est livrée à ce stade. Prévo
 | Tableau de bord en local | Droits, filtres, période inclusive, changements d’heure, indisponibilité et montants connus testés. Le jeu de test comporte 13 commandes et 495,00 € de CA. |
 | Écriture après transaction | Rejeu sans doublon, révision ancienne refusée, commit SQL refusé sans écriture MongoDB, commande SQL conservée pendant une panne MongoDB simulée en local et rattrapage par la commande Symfony. |
 | Mise en ligne sur Render | Atlas connecté. Deux commandes visibles après synchronisation initiale. Migration appliquée et deux commandes initialisées à la révision 1 dans pgAdmin. Test de création et de passage à Terminée confirmé avec l’actualisation automatique. |
+
+<a id="verification-services"></a>
+
+### 11.3 Vérifications reproductibles des statistiques et des e-mails
+
+Depuis la racine, installer les dépendances, activer les extensions PHP nécessaires (`mongodb`, `pdo_pgsql`, `pdo_sqlite`) et démarrer MongoDB local pour les scripts de statistiques. Activer aussi l’extension dans le serveur web pour la recette du tableau de bord (section 4.3).
+
+```powershell
+# Fixer explicitement MongoDB local avant les tests utilisant l’URI configurée.
+$env:MONGODB_URI = 'mongodb://127.0.0.1:27017'
+docker compose -p vite-gourmand -f compose.mongodb.yaml up -d
+php -d variables_order=EGPCS tests/stats_sync.php
+php -d variables_order=EGPCS tests/statistiques_automatiques.php
+php -d variables_order=EGPCS tests/statistiques_dashboard.php
+php tests/emails_transactionnels.php
+php tests/creation_employe.php
+php bin/console lint:yaml config
+php bin/console lint:twig templates
+php bin/console lint:container
+php bin/console lint:container --env=prod --no-debug
+composer validate --strict --no-check-publish
+git diff --check
+```
+
+`variables_order=EGPCS` rend les variables d’environnement du processus disponibles au PHP CLI du poste ; la configuration privée ne doit pas rediriger ces tests vers Atlas. Ajouter `-d "extension=$mongoExtension"` après `php` si la DLL locale n’est pas activée dans le `php.ini`. Les tests sont isolés, mais leurs prérequis doivent être satisfaits avant lancement.
+
+| Script | Isolation et contrôles |
+|---|---|
+| `tests/stats_sync.php` | Tables PostgreSQL temporaires masquant les tables réelles dans sa transaction ; base MongoDB aléatoire `vg_stats_test_*`, supprimée à la fin. Huit statuts, dates, montants historiques, absence de données personnelles, rejeu sans doublon, mise à jour et panne MongoDB. Utilise l’URI MongoDB configurée, d’où le réglage local explicite ci-dessus. |
+| `tests/statistiques_automatiques.php` | Force `127.0.0.1:27017`, sans Atlas ; schéma PostgreSQL et base MongoDB `vg_stats_auto_test_*` aléatoires, supprimés à la fin. Exécute la vraie migration et son trigger, valide les transactions métier, teste création/renvoi, transitions/terminaison, restitution, annulations et modifications client/équipe, menu relu depuis SQL, panne puis rattrapage et journaux sans secret. Une lecture ancienne en `REPEATABLE READ` ne doit pas écraser le document récent ; un trigger différé refuse le commit après flush pour vérifier l’absence de projection. |
+| `tests/statistiques_dashboard.php` | Authentification et horaires du footer en SQLite temporaire ; aucune table SQL de commandes ou menus. Vraies agrégations dans une base MongoDB `vg_dashboard_test_*` aléatoire, supprimée à la fin. Droits/navigation, filtres et paramètres invalides, bornes à la milliseconde, périodes ouvertes et changements d’heure, base vide et panne. |
+| `tests/emails_transactionnels.php` | Boîte en mémoire et parcours HTTP du reset en SQLite temporaire. Vérifie les From des quatre services de notification client et du reset, simule Brevo 201, contrôle POST HTTPS/authentification/contenu et sélection SMTP de Mailpit. Aucun envoi réel. |
+| `tests/creation_employe.php` | SQLite temporaire et Mailer relié à un transport de test. Droits, CSRF, validation/doublon, rôle imposé, hachage/connexion ; destinataire et From, absence de mot de passe/hachage dans le mail, compte visible depuis une autre connexion avant envoi ; compte conservé et avertissement sur panne ou DSN invalide. Aucun compte créé dans la base de travail. |
+
+Repères du jeu de tableau de bord : **13 commandes**, réparties **6 / 6 / 1** entre Menu Bordeaux, Menu Jardin et Menu Sans vente. Les cinq commandes terminées totalisent **49 500 centimes (495,00 €)** : 39 500 pour Bordeaux et 10 000 pour Jardin. Pour le 10 janvier 2026 inclus : **360,00 €**, dont **260,00 €** pour Bordeaux. Les dates de prestation différentes et les frais de livraison élevés vérifient leur exclusion du filtre et du CA ; les autres statuts sont représentés et exclus du CA.
+
+Pour vérifier l’image, sans affirmer ici un nouveau build ou une nouvelle recette :
+
+```powershell
+docker build --progress plain -t vite-gourmand-stats .
+docker run --rm vite-gourmand-stats php --ri mongodb
+docker run --rm vite-gourmand-stats composer check-platform-reqs --no-dev
+```
+
+Les commandes ci-dessus sont les procédures disponibles ; leur présence dans la documentation ne signifie pas qu’elles ont toutes été relancées lors de cette consolidation. Les résultats datés déjà consignés restent dans les autres sous-sections du registre. Dans le navigateur, contrôler aussi graphique/tableaux à 390 et 1440 px, clavier, erreurs/indisponibilité et réception réelle de chaque type de mail vers une boîte de test autorisée.
+
+### 11.4 Vérifications reproductibles des horaires
+
+Depuis la racine, avec les dépendances installées et les extensions PHP/connexions configurées :
+
+```powershell
+php tests/horaires_footer.php
+php tests/horaires_postgresql.php
+php tests/installation_postgresql.php
+php bin/console doctrine:schema:validate --skip-sync
+php bin/console lint:container --resolve-env-vars
+```
+
+Les contrôles Twig, conteneurs dev/prod, e-mails et création d’employé sont communs avec la section 11.3. Contrôler aussi la syntaxe des fichiers PHP concernés avec `php -l`. Sous Windows, activer l’extension `mongodb` ou utiliser le préfixe de la section 4.3 pour les commandes Symfony qui en ont besoin.
+
+- `tests/horaires_footer.php` crée puis supprime une base SQLite temporaire : semaine complète, plusieurs créneaux, fermeture prioritaire, données absentes/partielles, footer sur accueil/connexion/catalogue de six menus, une requête SQL par page et mémoïsation limitée à la requête, y compris la réponse AJAX complète.
+- `tests/horaires_postgresql.php` utilise PostgreSQL local mais écrit dans deux tables **TEMP** copiant les tables publiques. Il extrait le bloc de `02_donnees.sql`, vérifie les mappings/rendus, deux exécutions identiques et la conservation d’une semaine partielle. Les tables publiques sont comparées avant/après ; copies et séquences temporaires disparaissent avec la connexion.
+- `tests/installation_postgresql.php` nécessite le droit **CREATEDB**. Il crée une base vide aléatoire réservée aux tests, y exécute les fichiers complets `01_creation.sql` puis `02_donnees.sql`, vérifie le catalogue, les sept jours/onze créneaux et le rejeu du seul bloc horaires, puis supprime cette base. Il ne réinitialise pas la base de travail.
+
+Les schémas minimaux des tests employé, e-mails et statistiques incluent les deux mappings horaires puisque ces pages rendent le footer commun ; cela ne change pas leurs règles métier. `doctrine:schema:validate --skip-sync` contrôle les mappings, sans comparer l’intégralité du schéma SQL.
+
+Le compte rendu local antérieur au regroupement documentaire rapporte les trois tests horaires/installation réussis, ainsi que les suites employé/e-mails, syntaxe PHP, mappings, lint Twig (34 templates), conteneurs et `git diff --check`. Chrome a été contrôlé à 390 et 1440 px sur semaines complète, fermée/à plusieurs créneaux, vide et partielle, sans débordement. La suite du tableau de bord n’avait pas été relancée lors de ce lot faute de MongoDB local ; sa procédure reste en section 11.3. Ces résultats historiques ne sont pas une nouvelle exécution pendant la consolidation. Restent le chargement des horaires réels choisis sur les bases de travail/Render et la vérification des autres navigateurs.
 
 ### 11.8 Recette et état du code au 15 novembre
 
@@ -672,13 +907,68 @@ Présenter l’application et les comptes de démonstration ; expliquer consulta
 
 Le README à la racine couvre les dépendances, PostgreSQL, les migrations, MongoDB, Mailpit, le serveur et les comptes de démonstration. Compléter l’installation optionnelle de `03_menus_demo.sql` et tester l’ensemble sur un environnement neuf.
 
-### Déploiement : éléments à renseigner
+<a id="deploiement-render"></a>
 
-Le service web Docker suit `develop` sur Render. L’image installe PHP 8.4, Apache et `pdo_pgsql`, avec `public/` comme racine HTTP. PostgreSQL Render héberge une base dédiée dans la même région. Les scripts `sql/01_creation.sql` et `sql/02_donnees.sql` ont été exécutés dans cet ordre sur une base vide.
+### Déploiement Render : PostgreSQL, Atlas et Brevo
 
-Le service web utilise l’URL PostgreSQL interne. pgAdmin et la commande Symfony exécutée depuis le PC utilisent l’URL externe. Les variables `APP_ENV=prod`, `APP_DEBUG=0`, `APP_SECRET`, `DATABASE_URL`, `PORT` et `ORS_API_KEY` sont configurées sur Render. En recette, le transport actuel utilise l’API Brevo via `MAILER_DSN` et l’expéditeur configuré dans `MAILER_FROM_EMAIL`. Mailpit reste le transport de développement. Voir `docs/emails-brevo-render.md`. Conserver les valeurs sensibles dans les réglages du service. L’erreur Doctrine de version de plateforme vide a été résolue avec `server_version` explicite dans `when@prod`.
+Le service web Docker suit `develop` sur Render. L’image contient PHP 8.4, Apache avec `public/` comme racine HTTP, `pdo_pgsql`, `mongodb` 2.5.7 et les dépendances Composer de production. Le service utilise l’URL PostgreSQL interne ; pgAdmin et PHP depuis le PC utilisent l’URL externe. La version PostgreSQL explicite dans `when@prod` a corrigé l’erreur Doctrine de version de plateforme vide. Les valeurs doivent correspondre à l’environnement effectivement ciblé.
 
-MongoDB Atlas reçoit les projections de commandes. Render utilise les variables d’environnement MongoDB du projet et ses plages de sortie sont autorisées dans Atlas. La migration de révision a été appliquée à PostgreSQL Render avant le déploiement du code d’actualisation. Le premier import a lu PostgreSQL Render et écrit vers Atlas. La base PostgreSQL gratuite expire 30 jours après sa création. Contrôler la disponibilité pour le jury, puis terminer la vérification des envois, les sauvegardes et la recette finale.
+1. Pour une nouvelle base uniquement, exécuter `sql/01_creation.sql` puis `sql/02_donnees.sql` (README). Sur une base existante, ne pas rejouer ces fichiers complets. Les horaires ont leur bloc autonome en section 8.18.
+2. Renseigner les variables du service de la section 4.3 : `APP_ENV=prod`, `APP_DEBUG=0`, `APP_SECRET`, `DATABASE_URL`, `MONGODB_URI`, `MONGODB_DATABASE`, `MAILER_DSN`, `MAILER_FROM_EMAIL`, `DEFAULT_URI`, ainsi que `ORS_API_KEY` et le réglage de port requis par l’hébergement. Garder toutes les valeurs sensibles hors Git.
+3. Pour Atlas, autoriser les adresses de sortie du service Render, vérifier l’utilisateur et ses droits de lecture/écriture sur la base choisie. Pour Brevo, utiliser la clé API dans le DSN HTTPS, valider l’expéditeur/domaine et remplacer l’adresse fictive locale.
+4. Dans l’environnement applicatif de la base ciblée, appliquer la migration additive **avant** la première projection et le code qui dépend de la révision :
+
+```powershell
+php bin/console doctrine:migrations:migrate --no-interaction --env=prod --no-debug
+php bin/console doctrine:migrations:status --env=prod --no-debug
+php bin/console cache:clear --env=prod --no-debug
+php bin/console lint:container --env=prod --no-debug
+```
+
+5. Effectuer l’import initial avec la commande décrite ci-dessous, puis vérifier `/admin/statistiques` et une création/transition de commande. Contrôler un envoi autorisé de chaque type de mail, l’expéditeur, le destinataire et les liens HTTPS ; vérifier également les indésirables. Aucun worker Messenger n’est à démarrer pour le Mailer actuel.
+
+La recette déjà consignée indique qu’Atlas est connecté, que deux commandes ont été importées initialement, que la migration a été appliquée sur PostgreSQL Render et que création/terminaison actualisent les statistiques. La réception du reset et de la notification employé est consignée en section 11.8. Ces observations historiques ne remplacent pas une recette de la dernière version déployée. Relever la disponibilité et l’échéance de la base Render, les sauvegardes et le SHA déployé avant la remise.
+
+### Import et rattrapage MongoDB
+
+La même commande assure l’import initial et le rattrapage après panne ou arrêt entre commit SQL et projection :
+
+```powershell
+# Local : avec la configuration PostgreSQL/MongoDB locale.
+php bin/console app:stats:sync
+# Render : dans l’environnement applicatif configuré pour PostgreSQL Render et Atlas.
+php bin/console app:stats:sync --env=prod --no-debug
+```
+
+Elle lit PostgreSQL sans le modifier et affiche les nombres de commandes lues, de documents créés, modifiés et inchangés. Code retour **0** en cas de succès, **1** si l’extension manque, si MongoDB est inaccessible/refuse une opération ou si la lecture SQL échoue. Une base SQL sans commande reste un succès si MongoDB est accessible. Un échec peut laisser une projection partielle : corriger la connexion puis relancer ; les garanties de la section 6.5 empêchent doublons et régression de révision. Cette commande ne renvoie **aucun e-mail** et ne rattrape pas les suppressions SQL.
+
+Pour contrôler un import, relancer la commande sans modifier PostgreSQL : le second passage doit compter zéro création et zéro modification, avec le même nombre de documents. Les tests de la section 11.3 couvrent également une modification de statut et le refus d’une écriture ancienne.
+
+<a id="depannage-services"></a>
+
+### Dépannage des statistiques et des e-mails
+
+| Symptôme | Vérifications et action |
+|---|---|
+| Extension MongoDB absente ou Composer refuse la plateforme | `php --ini`, `php --ri mongodb`, compatibilité DLL PHP/TS/NTS/x64 ; vérifier aussi le PHP web. Pour Docker, reconstruire l’image puis contrôler l’extension et `composer check-platform-reqs --no-dev` (section 11.3). |
+| Lecture SQL impossible ou colonne `version_statistiques` absente | Vérifier `DATABASE_URL`, la base ciblée et `doctrine:migrations:status` ; appliquer la migration avec la procédure de déploiement. Ne pas lancer une synchronisation destructrice du schéma. |
+| CLI en échec ou page statistiques 503 | Démarrage/santé du Compose local ou URI Atlas, réseau et liste d’accès Atlas, utilisateur/droits, `MONGODB_DATABASE` et extension du PHP servant la page. Les messages applicatifs n’affichent pas l’URI authentifiée. |
+| Statistiques en retard après une action réussie | Vérifier le message fixe « Statistiques de commande non actualisées », corriger l’accès MongoDB puis lancer `app:stats:sync`. L’action reste dans PostgreSQL. Un document orphelin après suppression SQL n’est pas purgé par cette commande. |
+| Compteur/CA différents de l’attendu | Vérifier l’environnement/base de projection, la date de **création**, le statut `terminee`, les bornes Paris, la remise et l’exclusion de la livraison. Le graphique reste global lorsque le CA est filtré. Ne pas confondre résultat vide 200, filtre invalide 400 et panne 503. |
+| Mail local absent | Démarrer Mailpit **avant** l’action ; contrôler le DSN SMTP et l’interface `http://127.0.0.1:8025/`. Redémarrer Mailpit ne rejoue pas un message échoué. |
+| Mail Brevo absent ou refusé | Vérifier `MAILER_DSN` de type `brevo+api`, clé **API** et encodage URI, accès HTTPS, `MAILER_FROM_EMAIL` autorisé, domaine et indésirables. Ne pas attendre un worker ; l’envoi est direct. |
+| Mauvais expéditeur ou lien local dans un mail | Contrôler `MAILER_FROM_EMAIL`, `DEFAULT_URI` et le contexte HTTP de l’URL publique ; reconstruire le cache prod après changement de configuration. |
+| Employé créé mais notification échouée | Conserver le compte, lire l’avertissement et informer l’employé ; ne pas recréer son compte pour réessayer l’envoi. Ne jamais transmettre le mot de passe dans le mail de notification. |
+
+Pour inspecter la configuration sans recopier les valeurs privées dans un compte rendu :
+
+```powershell
+php bin/console debug:router app_admin_statistiques
+php bin/console debug:config framework mailer --env=prod --no-debug
+php bin/console debug:container http_client --env=prod --no-debug
+```
+
+Consulter les journaux locaux ou du service Render en masquant les secrets avant partage. La journalisation expurgée de l’actualisation statistique et de la création d’employé ne doit pas être généralisée aux autres services : plusieurs anciens appels mail journalisent l’objet exception. Pour un reset, l’erreur transport peut encore interrompre la requête (section 7.4). Aucun de ces parcours ne fournit une file de réessai persistante.
 
 ## 14. Mise à jour et historique
 
@@ -686,6 +976,7 @@ MongoDB Atlas reçoit les projections de commandes. Render utilise les variables
 
 | Version | Date | Évolution |
 |---|---|---|
+| 1.4 | 18/11/2026 | Documentation technique des statistiques, e-mails et horaires centralisée : configuration locale/Render, migration, projection/rattrapage, règles du CA, initialisation SQL des horaires, tests et dépannage, relus avec le code actuel. |
 | 1.3 | 18/11/2026 | Horaires choisis, affichage local livré et testé selon Codex, regroupement dans 02_donnees.sql demandé et chargement Render en attente. |
 | 1.2 | 18/11/2026 | MCD référencé et expliqué, point sur la modération et lot horaires en cours. |
 | 1.1 | 15/11/2026 | Interface publique et privée, huit menus illustrés, README, exports graphiques, e-mails Brevo et préparation de la copie Studi. |
@@ -699,7 +990,7 @@ MongoDB Atlas reçoit les projections de commandes. Render utilise les variables
 | 0.2 | 19/10/2026 | Ajout des entités commande/historique, service de prix et essais, formulaire/contrôleur protégés, préremplissage, options minimum/délai et état Git 2671a66 ; limites de validation et enregistrement précisées |
 | 0.1 | 18/10/2026 | Relecture des 12 pages de l’énoncé ; synthèse des travaux jusqu’à l’authentification/reset ; état Git, gestion de projet, architecture, sécurité, modèle, recette, exigences et livrables ; prochaines étapes identifiées |
 
-La V1.0 intègre le résultat de la recette des statistiques et le point sur les livrables graphiques. Reporter cette version des deux Markdown dans `docs/` du dépôt de travail si nécessaire.
+La documentation technique des statistiques, des e-mails et des horaires est désormais regroupée ici. Les versions antérieures de ce tableau restent des repères de recette ; les procédures courantes sont dans les sections thématiques ci-dessus.
 
 ## 15. Préparation de la copie à rendre Studi
 
@@ -751,6 +1042,9 @@ Expliquer avec son propre code pourquoi un service reçoit HttpClientInterface, 
 
 - [Doctrine : transactions et concurrence](https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/transactions-and-concurrency.html).
 - [Symfony 7.4 : Mailer](https://symfony.com/doc/7.4/mailer.html), notamment TemplatedEmail et les erreurs de transport.
+- [Pilote PHP MongoDB : releases officielles](https://github.com/mongodb/mongo-php-driver/releases) et [mises à jour MongoDB par pipeline](https://www.mongodb.com/docs/manual/tutorial/update-documents-with-aggregation-pipeline/).
+- [API transactionnelle Brevo](https://developers.brevo.com/docs/send-a-transactional-email) et [expéditeurs/domaines](https://developers.brevo.com/docs/getting-started-with-senders-and-domains).
+- [Render : connexions PostgreSQL externes](https://render.com/docs/postgresql-creating-connecting#external-connections).
 - [IGN : géocodage](https://cartes.gouv.fr/aide/fr/guides-utilisateur/utiliser-les-services-de-la-geoplateforme/geocodage/).
 - [HeiGIT : changement d’adresse des API](https://ask.openrouteservice.org/t/deprecating-api-openrouteservice-org-in-favour-of-api-heigit-org/7912).
 - [ORS : structure des requêtes et réponses](https://giscience.github.io/openrouteservice/v9.10.0/api-reference/endpoints/directions/requests-and-return-types).
