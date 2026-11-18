@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Confirmer ma commande — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container commande-page confirmation-page">
+        <h1>Vérifiez votre commande</h1>
+        <p class="commande-introduction">Relisez les informations et le montant final avant de confirmer.</p>
+
+        <div class="commande-layout">
+            <div class="commande-fields">
+                <section class="menu-card" aria-labelledby="confirmation-prestation">
+                    <h2 id="confirmation-prestation">Prestation</h2>
+                    <dl class="commande-amounts">
+                        <div>
+                            <dt>Date</dt>
+                            <dd>{{ confirmation.date_prestation|date('d/m/Y') }}</dd>
+                        </div>
+                        <div>
+                            <dt>Heure souhaitée</dt>
+                            <dd>{{ confirmation.heure_livraison }}</dd>
+                        </div>
+                        <div>
+                            <dt>Nombre de convives</dt>
+                            <dd>{{ confirmation.nombre_personnes }}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="menu-card" aria-labelledby="confirmation-adresse">
+                    <h2 id="confirmation-adresse">Adresse retenue</h2>
+                    <p class="confirmation-address">{{ confirmation.adresse_livraison }}<br>{{ confirmation.code_postal_livraison }} {{ confirmation.ville_livraison }}</p>
+                    <p>Téléphone : {{ confirmation.telephone_contact }}</p>
+                </section>
+            </div>
+
+            <section class="menu-card commande-summary" aria-labelledby="confirmation-recapitulatif">
+                <h2 id="confirmation-recapitulatif">Récapitulatif final</h2>
+                <h3 class="menu-card-title">{{ menu.nom }}</h3>
+                <dl class="commande-amounts">
+                    <div>
+                        <dt>Menu avant remise</dt>
+                        <dd>{{ (recapitulatif.montant_menu / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                    <div>
+                        <dt>Remise</dt>
+                        <dd>{{ (recapitulatif.remise / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                    <div>
+                        <dt>Livraison</dt>
+                        <dd>{{ (recapitulatif.frais_livraison / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                    <div class="commande-total confirmation-total">
+                        <dt>Total final</dt>
+                        <dd>{{ (recapitulatif.total / 100)|number_format(2, ',', ' ') }} €</dd>
+                    </div>
+                </dl>
+
+                <form class="confirmation-form" method="post" action="{{ path('app_commande_confirmation', {jeton: confirmation.jeton_confirmation}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('confirmer_commande_' ~ confirmation.jeton_confirmation) }}">
+                    <button class="vg-btn" type="submit" aria-describedby="confirmation-note">Confirmer la commande</button>
+                </form>
+                <p class="commande-note" id="confirmation-note">Votre commande sera soumise à la validation de l’équipe.</p>
+            </section>
+        </div>
+
+        <p>
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_commande', {id: menu.id}) }}">Recommencer la saisie</a>
+        </p>
+    </main>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérifier la modification — Commande n°{{ commande.id }}{% endblock %}
+
+{% block body %}
+    <main class="container commande-page adresse-page">
+        <h1>Vérifier la modification de la commande n°{{ commande.id }}</h1>
+        <p class="commande-introduction">Menu conservé : {{ commande.menu.nom }}</p>
+        {% if erreur is not null %}
+            <p class="form-error" role="alert">{{ erreur }}</p>
+        {% endif %}
+
+        <div class="commande-layout">
+            <div class="commande-fields">
+                <section class="menu-card commande-summary" aria-labelledby="contact-verifie">
+                    <h2 id="contact-verifie">Contact préalable</h2>
+                    <p>Contact : {{ brouillon.mode_contact == 'telephone' ? 'Téléphone' : 'Email' }}</p>
+                    <p>Motif : {{ brouillon.motif }}</p>
+                    <p>Contact avec le client confirmé : <strong>{{ brouillon.client_contacte ? 'Oui' : 'Non' }}</strong></p>
+                </section>
+
+                {% if adresseForm is not null %}
+                    <section class="menu-card" aria-labelledby="choix-adresse">
+                        <h2 id="choix-adresse">Vérifier la nouvelle adresse</h2>
+                        <p id="adresse-equipe-help">Sélectionnez l’adresse correspondant au lieu de livraison souhaité.</p>
+                        {{ form_start(adresseForm, {
+                            attr: adresseForm.vars.attr|merge({class: (adresseForm.vars.attr.class|default('') ~ ' adresse-form')|trim})
+                        }) }}
+                            {% if adresseForm.vars.errors|length %}
+                                <div class="form-error" role="alert">{{ form_errors(adresseForm) }}</div>
+                            {% endif %}
+                            <fieldset class="adresse-options" aria-describedby="adresse-equipe-help{% if adresseForm.adresse.vars.errors|length %} adresse-equipe-errors{% endif %}">
+                                <legend>{{ adresseForm.adresse.vars.label }}</legend>
+                                {% if adresseForm.adresse.vars.errors|length %}
+                                    <div class="form-error" id="adresse-equipe-errors" role="alert">{{ form_errors(adresseForm.adresse) }}</div>
+                                {% endif %}
+                                <div class="adresse-list">
+                                    {% for choix in adresseForm.adresse %}
+                                        <div class="adresse-choice">{{ form_widget(choix) }}{{ form_label(choix) }}</div>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                            <button class="vg-btn" type="submit">Vérifier l’adresse et calculer le total</button>
+                        {{ form_end(adresseForm) }}
+                    </section>
+                {% endif %}
+
+                {% if recapitulatif is not null %}
+                    <section class="menu-card commande-summary" aria-labelledby="prestation-proposee">
+                        <h2 id="prestation-proposee">Prestation proposée</h2>
+                        <dl class="commande-amounts commande-detail-prestation">
+                            <div><dt>Nombre de personnes</dt><dd>{{ recapitulatif.nombre_personnes }}</dd></div>
+                            <div><dt>Prestation</dt><dd>{{ recapitulatif.date_prestation|date('d/m/Y') }} à {{ recapitulatif.heure_livraison }}</dd></div>
+                            <div><dt>Adresse</dt><dd>{{ recapitulatif.adresse }}</dd></div>
+                            <div><dt>Téléphone</dt><dd>{{ brouillon.donnees.telephone_contact }}</dd></div>
+                        </dl>
+                    </section>
+                {% endif %}
+            </div>
+
+            <section class="menu-card commande-summary" aria-labelledby="recapitulatif">
+                <h2 id="recapitulatif">Récapitulatif proposé</h2>
+                <h3 class="menu-card-title">{{ commande.menu.nom }}</h3>
+                {% if recapitulatif is not null %}
+                    <dl class="commande-amounts">
+                        <div><dt>Menu avant remise</dt><dd>{{ (recapitulatif.montant_menu / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                        <div><dt>Remise</dt><dd>{{ (recapitulatif.remise / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                        <div>
+                            <dt>{% if recapitulatif.adresse_identique %}Frais de livraison conservés{% else %}Frais de livraison recalculés{% endif %}</dt>
+                            <dd>{{ (recapitulatif.frais_livraison / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div class="commande-total confirmation-total"><dt>Nouveau total</dt><dd>{{ (recapitulatif.total / 100)|number_format(2, ',', ' ') }} €</dd></div>
+                    </dl>
+                    {% if recapitulatif.distance_metres is not null %}
+                        <p class="commande-note">Distance routière aller : {{ (recapitulatif.distance_metres / 1000)|number_format(3, ',', ' ') }} km</p>
+                    {% endif %}
+                    <p class="commande-note">Aucune modification n’est encore enregistrée.</p>
+                    {% if jeton_confirmation is not null %}
+                        <form class="confirmation-form" method="post" action="{{ path('app_gestion_modification_commande_confirmer', {jeton: jeton_confirmation}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('confirmer_modification_equipe_' ~ jeton_confirmation) }}">
+                            <button class="vg-btn" type="submit">Confirmer et enregistrer</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p>Vérifiez l’adresse pour préparer les montants avant la confirmation.</p>
+                    <dl class="commande-amounts">
+                        <div><dt>Livraison</dt><dd>À calculer</dd></div>
+                        <div class="commande-total"><dt>Nouveau total</dt><dd>À calculer</dd></div>
+                    </dl>
+                {% endif %}
+            </section>
+        </div>
+
+        <p class="commande-detail-actions">
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes_modifier', {id: commande.id}) }}">Recommencer la modification</a>
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes_show', {id: commande.id}) }}">Revenir au détail</a>
+        </p>
+    </main>
+{% endblock %}

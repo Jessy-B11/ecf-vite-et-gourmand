@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande enregistrée — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container commande-page succes-page">
+        <article class="menu-card commande-summary succes-card" aria-labelledby="commande-enregistree">
+            <h1 id="commande-enregistree">Votre commande est enregistrée</h1>
+            <p class="succes-reference">Commande n°{{ commande.id }}</p>
+            <p class="commande-note">Votre commande est en attente de validation par l’équipe.</p>
+
+            <dl class="commande-amounts">
+                <div>
+                    <dt>Prestation</dt>
+                    <dd>{{ commande.datePrestation|date('d/m/Y') }} à {{ commande.heureLivraison|date('H:i') }}</dd>
+                </div>
+                <div>
+                    <dt>Nombre de personnes</dt>
+                    <dd>{{ commande.nombrePersonnes }}</dd>
+                </div>
+                <div>
+                    <dt>Livraison</dt>
+                    <dd>{{ commande.adresseLivraison }}, {{ commande.codePostalLivraison }} {{ commande.villeLivraison }}</dd>
+                </div>
+                <div class="commande-total">
+                    <dt>Total</dt>
+                    <dd>{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                </div>
+            </dl>
+
+            <div class="succes-actions">
+                <a class="vg-btn" href="{{ path('app_mes_commandes_show', {id: commande.id}) }}">Suivre ma commande</a>
+                <a class="vg-btn vg-btn--secondaire" href="{{ path('app_menu') }}">Revenir aux menus</a>
+            </div>
+        </article>
+    </main>
+{% endblock %}

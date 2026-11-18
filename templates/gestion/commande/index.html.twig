@@ -1,0 +1,118 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des commandes — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container commande-page">
+        <h1>Gestion des commandes</h1>
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <p class="flash flash-{{ type }}" role="status">{{ message }}</p>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="commande-fields">
+            <section class="menu-card" aria-labelledby="filtres-commandes">
+                <h2 id="filtres-commandes">Filtrer les commandes</h2>
+                <form class="registration-form commande-form" method="get" action="{{ path('app_gestion_commandes') }}">
+                    <div class="commande-grid">
+                        <div>
+                            <label for="filtre-statut">Statut</label>
+                            <select id="filtre-statut" name="statut">
+                                <option value="">Tous les statuts</option>
+                                {% for valeur, libelle in statuts %}
+                                    <option value="{{ valeur }}"{% if filtre_statut == valeur %} selected{% endif %}>{{ libelle }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="filtre-client">Client : nom, prénom ou email</label>
+                            <input type="search" id="filtre-client" name="client" value="{{ filtre_client }}" maxlength="100">
+                        </div>
+                    </div>
+                    <div class="commande-detail-actions">
+                        <div><button class="vg-btn" type="submit">Filtrer</button></div>
+                        <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes') }}">Réinitialiser les filtres</a>
+                    </div>
+                </form>
+            </section>
+
+            <p class="menu-results-count">
+                {{ nombre_resultats }} commande(s) correspondant aux filtres.
+                Jusqu’à {{ elements_par_page }} commandes par page.
+            </p>
+
+            <div class="commandes-list">
+                {% for commande in commandes %}
+                    <article class="menu-card commande-summary commandes-card" aria-labelledby="commande-{{ commande.id }}">
+                        <div class="commandes-card-heading">
+                            <p class="menu-card-meta">Commande n°{{ commande.id }}</p>
+                            <p class="commandes-status">Statut : {{ statuts[commande.statut] ?? commande.statut }}</p>
+                        </div>
+                        <h2 id="commande-{{ commande.id }}">{{ commande.menu.nom }}</h2>
+                        <div class="commandes-card-details">
+                            <dl class="commandes-meta">
+                                <div>
+                                    <dt>Client</dt>
+                                    <dd>{{ commande.utilisateur.prenom }} {{ commande.utilisateur.nom }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Prestation</dt>
+                                    <dd>{{ commande.datePrestation|date('d/m/Y') }} à {{ commande.heureLivraison|date('H:i') }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Nombre de personnes</dt>
+                                    <dd>{{ commande.nombrePersonnes }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Total</dt>
+                                    <dd class="menu-card-price">{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                                </div>
+                            </dl>
+                            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes_show', {id: commande.id}) }}" aria-label="Voir le détail de la commande n°{{ commande.id }}">Voir le détail</a>
+                        </div>
+                        {% if commande.statut == 'en_attente' %}
+                            <form method="post" action="{{ path('app_gestion_commandes_accepter', {id: commande.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('accepter_commande_' ~ commande.id) }}">
+                                <button class="vg-btn" type="submit">Accepter la commande n°{{ commande.id }}</button>
+                            </form>
+                        {% endif %}
+                    </article>
+                {% else %}
+                    <p class="menu-card">Aucune commande ne correspond aux filtres.</p>
+                {% endfor %}
+            </div>
+            {% if nombre_pages > 1 %}
+                <nav class="commande-detail-actions" aria-label="Pagination des commandes">
+                    {% if page_courante > 1 %}
+                        <a
+                            href="{{ path('app_gestion_commandes', {
+                    statut: filtre_statut,
+                    client: filtre_client,
+                    page: page_courante - 1
+                }) }}"
+                        >
+                            Page précédente
+                        </a>
+                    {% endif %}
+
+                    <span aria-current="page">
+                        Page {{ page_courante }} sur {{ nombre_pages }}
+                    </span>
+
+                    {% if page_courante < nombre_pages %}
+                        <a
+                            href="{{ path('app_gestion_commandes', {
+                    statut: filtre_statut,
+                    client: filtre_client,
+                    page: page_courante + 1
+                }) }}"
+                        >
+                            Page suivante
+                        </a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        </div>
+    </main>
+{% endblock %}

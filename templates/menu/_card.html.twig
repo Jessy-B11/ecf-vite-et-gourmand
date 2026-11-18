@@ -1,0 +1,34 @@
+{% set image = menu.images|sort((a, b) => a.position <=> b.position)|first %}
+{% set heading_tag = heading_tag|default('h2') == 'h3' ? 'h3' : 'h2' %}
+
+<article class="menu-card menu-card--catalogue">
+    {% if image %}
+        <img class="menu-card-media" src="{{ image.chemin }}" alt="{{ image.textAlternatif }}"
+             width="800" height="400" loading="lazy">
+    {% else %}
+        <div class="menu-card-media menu-card-placeholder">Photo non disponible</div>
+    {% endif %}
+
+    <p class="menu-card-meta">{{ menu.theme.libelle }} · {{ menu.regime.libelle }}</p>
+    <{{ heading_tag }} class="menu-card-title">{{ menu.nom }}</{{ heading_tag }}>
+    <p class="menu-card-description">{{ menu.description }}</p>
+
+    <p class="menu-card-price">
+        {{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} € pour {{ menu.minimumPersonnes }} personnes
+    </p>
+    <p class="menu-card-unit-price">
+        {{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} € / personne · minimum {{ menu.minimumPersonnes }}
+    </p>
+
+    <p class="menu-card-availability">
+        {% if menu.stockCommandes > 0 %}
+            {{ menu.stockCommandes }} commandes disponibles
+        {% else %}
+            Indisponible
+        {% endif %}
+    </p>
+
+    <a class="vg-btn vg-btn--secondaire menu-card-action" href="{{ path('app_menu_show', {id: menu.id}) }}">
+        Voir le détail
+    </a>
+</article>

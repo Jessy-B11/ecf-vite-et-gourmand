@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modération des avis — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container commande-page">
+        <h1>Modération des avis</h1>
+
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <p role="{{ type == 'warning' ? 'alert' : 'status' }}">{{ message }}</p>
+            {% endfor %}
+        {% endfor %}
+
+        <div class="registration-grid">
+            {% for avis in avisEnAttente %}
+                <article class="menu-card commande-summary" aria-labelledby="avis-{{ avis.id }}">
+                    <h2 id="avis-{{ avis.id }}">Avis sur la commande n°{{ avis.commande.id }}</h2>
+                    <p class="menu-card-price">Note : {{ avis.note }}/5</p>
+                    <p class="moderation-comment">{{ avis.commentaire }}</p>
+                    <p class="commande-note">Déposé le {{ avis.dateCreation|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
+                    <div class="commande-detail-actions">
+                        {% for decision, libelle in {'valide': 'Approuver', 'refuse': 'Refuser'} %}
+                            <form method="post" action="{{ path('app_gestion_avis_moderer', {id: avis.id, decision: decision}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('moderer_avis_' ~ avis.id ~ '_' ~ decision) }}">
+                                <button class="vg-btn{{ decision == 'refuse' ? ' vg-btn--secondaire' : '' }}" type="submit">{{ libelle }}</button>
+                            </form>
+                        {% endfor %}
+                    </div>
+                </article>
+            {% else %}
+                <p class="menu-card registration-wide">Aucun avis en attente de modération.</p>
+            {% endfor %}
+        </div>
+    </main>
+{% endblock %}

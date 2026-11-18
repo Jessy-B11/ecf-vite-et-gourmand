@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes commandes — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% set statuts = {
+        'en_attente': 'En attente de validation',
+        'acceptee': 'Acceptée',
+        'en_preparation': 'En préparation',
+        'en_livraison': 'En livraison',
+        'livree': 'Livrée',
+        'attente_retour_materiel': 'En attente du retour du matériel',
+        'terminee': 'Terminée',
+        'annulee': 'Annulée'
+    } %}
+
+    <main class="container commande-page">
+        <h1>Mes commandes</h1>
+
+        <div class="commandes-list">
+            {% for commande in commandes %}
+                <article class="menu-card commandes-card" aria-labelledby="commande-{{ commande.id }}">
+                    <div class="commandes-card-heading">
+                        <p class="menu-card-meta">Commande n°{{ commande.id }}</p>
+                        <p class="commandes-status">
+                            Statut : {{ statuts[commande.statut]|default(commande.statut) }}
+                        </p>
+                    </div>
+
+                    <h2 id="commande-{{ commande.id }}">{{ commande.menu.nom }}</h2>
+
+                    <div class="commandes-card-details">
+                        <dl class="commandes-meta">
+                            <div>
+                                <dt>Commandée le</dt>
+                                <dd>
+                                    <time datetime="{{ commande.dateCreation|date('c', 'Europe/Paris') }}">
+                                        {{ commande.dateCreation|date('d/m/Y à H:i', 'Europe/Paris') }}
+                                    </time>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>Prestation</dt>
+                                <dd>
+                                    {{ commande.datePrestation|date('d/m/Y') }}
+                                    à {{ commande.heureLivraison|date('H:i') }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>Convives</dt>
+                                <dd>{{ commande.nombrePersonnes }}</dd>
+                            </div>
+                            <div>
+                                <dt>Total</dt>
+                                <dd class="menu-card-price">
+                                    {{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <a class="vg-btn vg-btn--secondaire"
+                            href="{{ path('app_mes_commandes_show', {id: commande.id}) }}"
+                            aria-label="Voir le récapitulatif de la commande n°{{ commande.id }}"
+                        >
+                            Voir le récapitulatif
+                        </a>
+                    </div>
+                </article>
+            {% else %}
+                <div class="menu-card commande-summary">
+                    <p>Vous n’avez pas encore passé de commande.</p>
+
+                    <div>
+                        <a class="vg-btn" href="{{ path('app_menu') }}">
+                            Découvrir nos menus
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+{% endblock %}

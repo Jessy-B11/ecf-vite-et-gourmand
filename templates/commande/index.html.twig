@@ -1,0 +1,124 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commander — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container commande-page">
+        <h1>Commander un menu</h1>
+        <p class="commande-introduction">{{ menu.nom }} · Informations et convives</p>
+
+        {{ form_start(commandeForm, {
+            attr: commandeForm.vars.attr|merge({class: (commandeForm.vars.attr.class|default('') ~ ' registration-form commande-form')|trim})
+        }) }}
+        {% if commandeForm.vars.submitted and not commandeForm.vars.valid %}
+            <p class="form-error" role="alert">Veuillez corriger les erreurs du formulaire.</p>
+        {% endif %}
+        {{ form_errors(commandeForm) }}
+
+        <div class="commande-layout">
+            <div class="commande-fields">
+                <section class="menu-card commande-conditions" aria-labelledby="conditions-menu">
+                    <h2 id="conditions-menu">Conditions du menu</h2>
+                    <p>{{ menu.conditions }}</p>
+                    <p>Minimum : {{ menu.minimumPersonnes }} personnes. Délai minimum : {{ menu.delaiMinimumJours }} jours calendaires.</p>
+                </section>
+
+                <section class="menu-card" aria-labelledby="coordonnees-compte">
+                    <h2 id="coordonnees-compte">Vos informations</h2>
+                    <div class="commande-grid">
+                        <dl class="commande-account">
+                            <dt>Prénom</dt>
+                            <dd>{{ client.prenom|default('Non renseigné') }}</dd>
+                        </dl>
+                        <dl class="commande-account">
+                            <dt>Nom</dt>
+                            <dd>{{ client.nom|default('Non renseigné') }}</dd>
+                        </dl>
+                        <dl class="commande-account">
+                            <dt>E-mail</dt>
+                            <dd>{{ client.email }}</dd>
+                        </dl>
+                        {{ form_row(commandeForm.telephoneContact) }}
+                    </div>
+                </section>
+
+                <section class="menu-card" aria-labelledby="lieu-date-prestation">
+                    <h2 id="lieu-date-prestation">Lieu et date de la prestation</h2>
+                    {{ form_row(commandeForm.adresseLivraison) }}
+                    <div class="commande-grid">
+                        {{ form_row(commandeForm.villeLivraison) }}
+                        {{ form_row(commandeForm.codePostalLivraison) }}
+                        {{ form_row(commandeForm.datePrestation) }}
+                        {{ form_row(commandeForm.heureLivraison) }}
+                    </div>
+                    {{ form_row(commandeForm.nombrePersonnes) }}
+                </section>
+
+                {% if adresses_proposees is not empty %}
+                    <section class="menu-card" aria-labelledby="adresses-trouvees">
+                        <h2 id="adresses-trouvees">Adresses trouvées</h2>
+                        <ul>
+                            {% for adresse in adresses_proposees %}
+                                <li>{{ adresse.properties.label }}</li>
+                            {% endfor %}
+                        </ul>
+                        <p>Vérifiez que l’adresse proposée correspond bien au lieu de livraison souhaité.</p>
+                    </section>
+                {% endif %}
+            </div>
+
+            <aside class="menu-card commande-summary" aria-labelledby="recapitulatif-menu">
+                <h2 id="recapitulatif-menu">Récapitulatif</h2>
+                {% set image = menu.images|sort((a, b) => a.position <=> b.position)|first %}
+                {% if image %}
+                    <img class="menu-card-media" src="{{ image.chemin }}" alt="{{ image.textAlternatif }}"
+                         width="800" height="400" loading="lazy">
+                {% else %}
+                    <div class="menu-card-media menu-card-placeholder">Photo non disponible</div>
+                {% endif %}
+                <h3 class="menu-card-title">{{ menu.nom }}</h3>
+                <p class="menu-card-price">{{ (menu.prixMinimumCentimes / 100)|number_format(2, ',', ' ') }} € pour {{ menu.minimumPersonnes }} personnes</p>
+                <p class="menu-card-unit-price">{{ (menu.prixMinimumCentimes / menu.minimumPersonnes / 100)|number_format(2, ',', ' ') }} € / personne · minimum {{ menu.minimumPersonnes }}</p>
+
+                <dl class="commande-amounts">
+                    {% if recapitulatif is not null %}
+                        <div>
+                            <dt>Nombre de personnes</dt>
+                            <dd>{{ recapitulatif.nombre_personnes }}</dd>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <dt>Sous-total menu</dt>
+                        <dd>{% if recapitulatif is not null %}{{ (recapitulatif.montant_menu / 100)|number_format(2, ',', ' ') }} €{% else %}À calculer{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>Remise</dt>
+                        <dd>{% if recapitulatif is not null %}{{ (recapitulatif.remise / 100)|number_format(2, ',', ' ') }} €{% else %}À calculer{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>Menu après remise, hors livraison</dt>
+                        <dd>{% if recapitulatif is not null %}{{ (recapitulatif.montant_apres_remise / 100)|number_format(2, ',', ' ') }} €{% else %}À calculer{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>Livraison</dt>
+                        <dd>À calculer</dd>
+                    </div>
+                    <div class="commande-total">
+                        <dt>Total avec livraison</dt>
+                        <dd>À calculer</dd>
+                    </div>
+                </dl>
+
+                <button class="vg-btn commande-submit" type="submit" aria-describedby="commande-etape-info">
+                    Calculer le prix et vérifier l’adresse
+                </button>
+                <p class="commande-note" id="commande-etape-info">Vous vérifierez l’adresse et le prix avant la confirmation définitive. Aucune commande n’est encore enregistrée.</p>
+            </aside>
+        </div>
+        {{ form_end(commandeForm) }}
+
+        <p>
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_menu_show', {id: menu.id}) }}">Revenir au menu</a>
+        </p>
+    </main>
+{% endblock %}

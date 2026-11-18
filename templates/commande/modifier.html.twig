@@ -1,0 +1,115 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier ma commande — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container commande-page">
+        <h1>Modifier la commande n°{{ commande.id }}</h1>
+        <p class="commande-introduction">{{ menu.nom }} · Vérifiez vos modifications avant de les confirmer.</p>
+
+        {{ form_start(modificationForm, {
+            attr: modificationForm.vars.attr|merge({class: (modificationForm.vars.attr.class|default('') ~ ' registration-form commande-form')|trim})
+        }) }}
+        {% if modificationForm.vars.submitted and not modificationForm.vars.valid %}
+            <p class="form-error" role="alert">Veuillez corriger les erreurs du formulaire.</p>
+        {% endif %}
+        {{ form_errors(modificationForm) }}
+
+        <div class="commande-layout">
+            <div class="commande-fields">
+                <section class="menu-card commande-conditions" aria-labelledby="conditions-modification">
+                    <h2 id="conditions-modification">Conditions de modification</h2>
+                    <p>Le menu choisi ne peut pas être remplacé.</p>
+                    <p>
+                        Si vous conservez l’adresse, les frais de livraison initiaux seront conservés.
+                        Si vous changez l’adresse, ils seront recalculés selon la zone autorisée.
+                    </p>
+                </section>
+
+                <section class="menu-card" aria-labelledby="prestation-modification">
+                    <h2 id="prestation-modification">Lieu et date de la prestation</h2>
+                    {{ form_row(modificationForm.adresseLivraison) }}
+                    <div class="commande-grid">
+                        {{ form_row(modificationForm.villeLivraison) }}
+                        {{ form_row(modificationForm.codePostalLivraison) }}
+                        {{ form_row(modificationForm.datePrestation) }}
+                        {{ form_row(modificationForm.heureLivraison) }}
+                    </div>
+                    <div class="commande-fields">
+                        {{ form_row(modificationForm.nombrePersonnes) }}
+                        {{ form_row(modificationForm.telephoneContact) }}
+                        <button class="vg-btn" type="submit">Vérifier mes modifications</button>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="menu-card commande-summary" aria-labelledby="recapitulatif-modification">
+                <h2 id="recapitulatif-modification">{% if recapitulatif is not null %}Récapitulatif des modifications{% else %}Votre commande actuelle{% endif %}</h2>
+                {% set image = menu.images|sort((a, b) => a.position <=> b.position)|first %}
+                {% if image %}
+                    <img class="menu-card-media" src="{{ image.chemin }}" alt="{{ image.textAlternatif }}" width="800" height="400" loading="lazy">
+                {% else %}
+                    <div class="menu-card-media menu-card-placeholder">Photo non disponible</div>
+                {% endif %}
+                <h3 class="menu-card-title">{{ menu.nom }}</h3>
+                <p class="menu-card-unit-price">Minimum : {{ menu.minimumPersonnes }} personnes</p>
+
+                {% if recapitulatif is not null %}
+                    <dl class="commande-amounts">
+                        <div>
+                            <dt>Nombre de personnes</dt>
+                            <dd>{{ recapitulatif.nombre_personnes }}</dd>
+                        </div>
+                        <div>
+                            <dt>Prestation</dt>
+                            <dd>{{ recapitulatif.date_prestation|date('d/m/Y') }} à {{ recapitulatif.heure_livraison }}</dd>
+                        </div>
+                        <div>
+                            <dt>Menu avant remise</dt>
+                            <dd>{{ (recapitulatif.montant_menu / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Remise</dt>
+                            <dd>{{ (recapitulatif.remise / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Frais de livraison conservés</dt>
+                            <dd>{{ (recapitulatif.frais_livraison / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div class="commande-total confirmation-total">
+                            <dt>Nouveau total</dt>
+                            <dd>{{ (recapitulatif.total / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                    </dl>
+                    <p class="commande-note">Aucune modification n’est encore enregistrée.</p>
+                    <a class="vg-btn" href="{{ path('app_modification_commande_confirmation', {jeton: jeton_confirmation}) }}">Continuer vers la confirmation</a>
+                {% else %}
+                    <dl class="commande-amounts">
+                        <div>
+                            <dt>Menu avant remise</dt>
+                            <dd>{{ (commande.montantMenuCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Remise</dt>
+                            <dd>{{ (commande.montantRemiseCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Livraison</dt>
+                            <dd>{{ (commande.fraisLivraisonCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div class="commande-total">
+                            <dt>Total enregistré</dt>
+                            <dd>{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                    </dl>
+                    <p class="commande-note">Ces montants sont ceux de votre commande actuelle. Vérifiez vos modifications pour calculer le nouveau total avant confirmation.</p>
+                {% endif %}
+            </aside>
+        </div>
+        {{ form_end(modificationForm) }}
+
+        <p>
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes_show', {id: commande.id}) }}">Revenir à ma commande</a>
+        </p>
+    </main>
+{% endblock %}

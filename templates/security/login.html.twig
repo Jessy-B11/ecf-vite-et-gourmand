@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container login-page">
+        <section class="menu-card login-card" aria-labelledby="login-title">
+            <h1 id="login-title">Connexion</h1>
+
+            {% if app.user %}
+                <p>
+                    Vous êtes connecté avec {{ app.user.userIdentifier }}.
+                </p>
+
+                <a href="{{ logout_path() }}">Se déconnecter</a>
+            {% else %}
+                <form method="post" action="{{ path('app_login') }}" class="login-form"{% if error %} aria-describedby="login-error"{% endif %}>
+                    {% if error %}
+                        <p class="form-error" id="login-error" role="alert">
+                            Connexion impossible. Vérifiez vos identifiants ou contactez l’entreprise.
+                        </p>
+                    {% endif %}
+
+                    <label for="username">Adresse email</label>
+                    <input
+                        type="email"
+                        id="username"
+                        name="_username"
+                        value="{{ last_username }}"
+                        autocomplete="username"
+                        required
+                    >
+
+                    <label for="password">Mot de passe</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="_password"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                    <input
+                        type="hidden"
+                        name="_csrf_token"
+                        value="{{ csrf_token('authenticate') }}"
+                    >
+
+                    <button class="vg-btn" type="submit">Se connecter</button>
+                </form>
+                <div class="login-alternatives">
+                    <p>Pas encore de compte ?</p>
+                    <a class="vg-btn vg-btn--secondaire" href="{{ path('app_register') }}">Créer un compte</a>
+                    <a href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un employé — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container registration-page">
+        <section class="menu-card registration-card" aria-labelledby="employe-titre">
+            <h1 id="employe-titre">Créer un employé</h1>
+
+            {% for message in app.flashes('success') %}
+                <p class="menu-card-meta" role="status">{{ message }}</p>
+            {% endfor %}
+
+            {% for message in app.flashes('warning') %}
+                <p class="form-error" role="alert">{{ message }}</p>
+            {% endfor %}
+
+            {% if employeForm.vars.submitted and not employeForm.vars.valid %}
+                <p class="form-error" role="alert">
+                    Le compte employé n’a pas été créé.
+                    Corrigez les erreurs indiquées ci-dessous, puis réessayez.
+                </p>
+            {% endif %}
+
+            {{ form_start(employeForm, {
+                attr: employeForm.vars.attr|merge({class: (employeForm.vars.attr.class|default('') ~ ' registration-form registration-grouped')|trim})
+            }) }}
+            {{ form_errors(employeForm) }}
+            <fieldset class="registration-group">
+                <legend>Identité</legend>
+                <div class="registration-grid">
+                    {{ form_row(employeForm.prenom) }}
+                    {{ form_row(employeForm.nom) }}
+                </div>
+            </fieldset>
+            <fieldset class="registration-group">
+                <legend>Coordonnées</legend>
+                {{ form_row(employeForm.email) }}
+            </fieldset>
+            <fieldset class="registration-group">
+                <legend>Mot de passe initial</legend>
+                <div class="registration-grid">
+                    {{ form_row(employeForm.plainPassword.first) }}
+                    {{ form_row(employeForm.plainPassword.second) }}
+                </div>
+            </fieldset>
+
+            <button class="vg-btn" type="submit">Créer l’employé</button>
+            {{ form_end(employeForm) }}
+
+            <p>
+                <a class="vg-btn vg-btn--secondaire" href="{{ path('app_gestion_commandes') }}">
+                    Revenir aux commandes
+                </a>
+            </p>
+        </section>
+    </main>
+{% endblock %}

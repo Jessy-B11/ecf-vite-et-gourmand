@@ -1,0 +1,41 @@
+<footer class="site-footer">
+    <div class="container site-footer-content">
+        <div>
+            <a class="site-brand site-footer-brand" href="{{ path('app_accueil') }}">Vite &amp; Gourmand</a>
+            <p class="site-footer-description">Traiteur bordelais depuis 25 ans.</p>
+        </div>
+
+        <section class="site-footer-hours" aria-labelledby="footer-horaires">
+            <h2 id="footer-horaires">Nos horaires</h2>
+            <dl>
+                {% for horaire in horaires_footer() %}
+                    <div>
+                        <dt>{{ horaire.jour }}</dt>
+                        <dd>
+                            {% if horaire.ferme %}
+                                Fermé
+                            {% elseif horaire.creneaux is empty %}
+                                Horaires non renseignés
+                            {% else %}
+                                {% for creneau in horaire.creneaux %}
+                                    <span class="site-footer-slot">{{ creneau }}</span>{% if not loop.last %} / {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </dd>
+                    </div>
+                {% endfor %}
+            </dl>
+        </section>
+
+        <nav aria-label="Navigation du pied de page">
+            <ul class="site-footer-links">
+                <li><a href="{{ path('app_accueil') }}">Accueil</a></li>
+                <li><a href="{{ path('app_menu') }}">Nos menus</a></li>
+                {% if not app.user %}
+                    <li><a href="{{ path('app_login') }}">Se connecter</a></li>
+                    <li><a href="{{ path('app_register') }}">Créer un compte</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</footer>

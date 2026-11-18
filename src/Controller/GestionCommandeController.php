@@ -1,0 +1,470 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Utilisateur;
+use App\Repository\CommandeRepository;
+use App\Repository\HistoriqueCommandeRepository;
+use App\Service\AcceptationCommande;
+use App\Service\EmailRetourMateriel;
+use App\Service\PretMaterielCommande;
+use App\Service\SuiviCommande;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\RetourMaterielCommande;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use App\Service\EmailInvitationAvis;
+
+#[IsGranted('ROLE_EMPLOYE')]
+final class GestionCommandeController extends AbstractController
+{
+    #[Route(
+        '/gestion/commandes',
+        name: 'app_gestion_commandes',
+        methods: ['GET']
+    )]
+    public function index(
+        Request $request,
+        CommandeRepository $commandeRepository
+    ): Response {
+        $utilisateur = $this->getUser();
+
+        if (
+            !$utilisateur instanceof Utilisateur
+            || !$utilisateur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $statuts = [
+            'en_attente' => 'En attente',
+            'acceptee' => 'Acceptée',
+            'en_preparation' => 'En préparation',
+            'en_livraison' => 'En livraison',
+            'livree' => 'Livrée',
+            'attente_retour_materiel' => 'En attente de retour du matériel',
+            'terminee' => 'Terminée',
+            'annulee' => 'Annulée',
+        ];
+
+        $parametres = $request->query->all();
+
+        $statut = $parametres['statut'] ?? '';
+        $client = $parametres['client'] ?? '';
+        $pageSaisie = $parametres['page'] ?? '1';
+
+        if (
+            !is_string($statut)
+            || !is_string($client)
+            || !is_string($pageSaisie)
+        ) {
+            throw new BadRequestHttpException(
+                'Les paramètres de recherche sont invalides.'
+            );
+        }
+
+        $statut = trim($statut);
+        $client = trim($client);
+
+        if (
+            $statut !== ''
+            && !array_key_exists($statut, $statuts)
+        ) {
+            throw new BadRequestHttpException(
+                'Le statut demandé est invalide.'
+            );
+        }
+
+        if (mb_strlen($client) > 100) {
+            throw new BadRequestHttpException(
+                'La recherche client est limitée à 100 caractères.'
+            );
+        }
+
+        if (!preg_match('/^[1-9][0-9]{0,5}$/D', $pageSaisie)) {
+            throw new BadRequestHttpException(
+                'Le numéro de page est invalide.'
+            );
+        }
+
+        $page = (int) $pageSaisie;
+
+        $commandes = $commandeRepository
+            ->findDernieresPourGestion($statut, $client, $page);
+
+        $total = count($commandes);
+
+        $nombrePages = max(
+            1,
+            (int) ceil(
+                $total / CommandeRepository::ELEMENTS_PAR_PAGE
+            )
+        );
+
+        if ($page > $nombrePages) {
+            throw $this->createNotFoundException(
+                'Cette page de résultats n’existe pas.'
+            );
+        }
+
+        return $this->render('gestion/commande/index.html.twig', [
+            'commandes' => $commandes,
+            'statuts' => $statuts,
+            'filtre_statut' => $statut,
+            'filtre_client' => $client,
+            'page_courante' => $page,
+            'nombre_pages' => $nombrePages,
+            'nombre_resultats' => $total,
+            'elements_par_page' => CommandeRepository::ELEMENTS_PAR_PAGE,
+        ]);
+    }
+
+    #[Route(
+        '/gestion/commandes/{id}',
+        name: 'app_gestion_commandes_show',
+        requirements: ['id' => '\d+'],
+        methods: ['GET']
+    )]
+    public function show(
+        int $id,
+        CommandeRepository $commandeRepository,
+        HistoriqueCommandeRepository $historiqueCommandeRepository
+    ): Response {
+        $utilisateur = $this->getUser();
+
+        if (
+            !$utilisateur instanceof Utilisateur
+            || !$utilisateur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        $historique = $historiqueCommandeRepository->findBy(
+            ['commande' => $commande],
+            ['dateChangement' => 'ASC', 'id' => 'ASC']
+        );
+
+        return $this->render('gestion/commande/detail.html.twig', [
+            'commande' => $commande,
+            'historique' => $historique,
+        ]);
+    }
+
+    #[Route(
+        '/gestion/commandes/{id}/accepter',
+        name: 'app_gestion_commandes_accepter',
+        requirements: ['id' => '\d+'],
+        methods: ['POST']
+    )]
+    public function accepter(
+        int $id,
+        Request $request,
+        CommandeRepository $commandeRepository,
+        AcceptationCommande $acceptationCommande
+    ): Response {
+        $auteur = $this->getUser();
+
+        if (
+            !$auteur instanceof Utilisateur
+            || !$auteur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'accepter_commande_' . $id,
+            $request->request->getString('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Le formulaire est invalide. Rechargez la page.'
+            );
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        try {
+            $acceptee = $acceptationCommande->accepter(
+                $commande,
+                $auteur
+            );
+        } catch (\DomainException | \InvalidArgumentException $exception) {
+            $this->addFlash(
+                'warning',
+                $exception->getMessage()
+            );
+
+            return $this->redirectToRoute(
+                'app_gestion_commandes',
+                [],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        $this->addFlash(
+            'success',
+            $acceptee
+                ? 'La commande a bien été acceptée.'
+                : 'Cette commande est déjà acceptée.'
+        );
+
+        return $this->redirectToRoute(
+            'app_gestion_commandes',
+            [],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+
+    #[Route(
+        '/gestion/commandes/{id}/suivi/{statut}',
+        name: 'app_gestion_commandes_suivi',
+        requirements: [
+            'id' => '\d+',
+            'statut' => 'en_preparation|en_livraison|livree|terminee|attente_retour_materiel',
+        ],
+        methods: ['POST']
+    )]
+    public function suivi(
+        int $id,
+        string $statut,
+        Request $request,
+        CommandeRepository $commandeRepository,
+        SuiviCommande $suiviCommande,
+        EmailRetourMateriel $emailRetourMateriel,
+        EmailInvitationAvis $emailInvitationAvis
+    ): Response {
+        $auteur = $this->getUser();
+
+        if (
+            !$auteur instanceof Utilisateur
+            || !$auteur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'suivi_commande_' . $id . '_' . $statut,
+            $request->request->getString('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Le formulaire est invalide. Rechargez la page.'
+            );
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        try {
+            $modifiee = $suiviCommande->changerStatut(
+                $commande,
+                $auteur,
+                $statut
+            );
+        } catch (\DomainException | \InvalidArgumentException $exception) {
+            $this->addFlash(
+                'warning',
+                $exception->getMessage()
+            );
+
+            return $this->redirectToRoute(
+                'app_gestion_commandes_show',
+                ['id' => $id],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        if (
+            $modifiee
+            && $statut === 'attente_retour_materiel'
+        ) {
+            $emailRetourMateriel->envoyer($commande);
+        }
+        if ($modifiee && $statut === 'terminee') {
+            $emailInvitationAvis->envoyer($commande);
+        }
+
+        $this->addFlash(
+            'success',
+            $modifiee
+                ? 'Le statut de la commande a bien été mis à jour.'
+                : 'La commande possède déjà ce statut.'
+        );
+
+        return $this->redirectToRoute(
+            'app_gestion_commandes_show',
+            ['id' => $id],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+
+    #[Route(
+        '/gestion/commandes/{id}/materiel/{pret}',
+        name: 'app_gestion_commandes_materiel',
+        requirements: [
+            'id' => '\d+',
+            'pret' => '0|1',
+        ],
+        methods: ['POST']
+    )]
+    public function materiel(
+        int $id,
+        string $pret,
+        Request $request,
+        CommandeRepository $commandeRepository,
+        PretMaterielCommande $pretMaterielCommande
+    ): Response {
+        $auteur = $this->getUser();
+
+        if (
+            !$auteur instanceof Utilisateur
+            || !$auteur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'materiel_commande_' . $id . '_' . $pret,
+            $request->request->getString('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Le formulaire est invalide. Rechargez la page.'
+            );
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        try {
+            $modifiee = $pretMaterielCommande->definir(
+                $commande,
+                $auteur,
+                $pret === '1'
+            );
+        } catch (\DomainException | \InvalidArgumentException $exception) {
+            $this->addFlash(
+                'warning',
+                $exception->getMessage()
+            );
+
+            return $this->redirectToRoute(
+                'app_gestion_commandes_show',
+                ['id' => $id],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        $this->addFlash(
+            'success',
+            $modifiee
+                ? 'Le prêt de matériel a bien été mis à jour.'
+                : 'Ce choix est déjà enregistré.'
+        );
+
+        return $this->redirectToRoute(
+            'app_gestion_commandes_show',
+            ['id' => $id],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+
+        #[Route(
+        '/gestion/commandes/{id}/materiel/retour',
+        name: 'app_gestion_commandes_retour_materiel',
+        requirements: ['id' => '\d+'],
+        methods: ['POST']
+    )]
+    public function retourMateriel(
+        int $id,
+        Request $request,
+        CommandeRepository $commandeRepository,
+        RetourMaterielCommande $retourMaterielCommande,
+        EmailInvitationAvis $emailInvitationAvis
+    ): Response {
+        $auteur = $this->getUser();
+
+        if (
+            !$auteur instanceof Utilisateur
+            || !$auteur->isActif()
+        ) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'retour_materiel_commande_' . $id,
+            $request->request->getString('_token')
+        )) {
+            throw $this->createAccessDeniedException(
+                'Le formulaire est invalide. Rechargez la page.'
+            );
+        }
+
+        $commande = $commandeRepository->find($id);
+
+        if ($commande === null) {
+            throw $this->createNotFoundException(
+                'Cette commande est introuvable.'
+            );
+        }
+
+        try {
+            $modifiee = $retourMaterielCommande->confirmer(
+                $commande,
+                $auteur
+            );
+        } catch (\DomainException | \InvalidArgumentException $exception) {
+            $this->addFlash(
+                'warning',
+                $exception->getMessage()
+            );
+
+            return $this->redirectToRoute(
+                'app_gestion_commandes_show',
+                ['id' => $id],
+                Response::HTTP_SEE_OTHER
+            );
+        }
+
+        if ($modifiee && $commande->getStatut() === 'terminee') {
+            $emailInvitationAvis->envoyer($commande);
+        }
+
+        $this->addFlash(
+            'success',
+            $modifiee
+                ? 'La restitution du matériel est enregistrée. La commande est terminée.'
+                : 'La restitution du matériel est déjà enregistrée.'
+        );
+
+        return $this->redirectToRoute(
+            'app_gestion_commandes_show',
+            ['id' => $id],
+            Response::HTTP_SEE_OTHER
+        );
+    }
+}

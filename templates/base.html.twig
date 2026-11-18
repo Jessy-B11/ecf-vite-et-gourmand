@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        {% include 'partials/favicons.html.twig' %}
+        {% block stylesheets %}
+            <link rel="stylesheet" href="/css/style.css">
+        {% endblock %}
+        
+
+        {% block javascripts %}
+        {% endblock %}
+        <script src="/js/navigation.js" defer></script>
+
+        {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
+        {% if frankenphp_hot_reload %}
+            <meta name="frankenphp-hot-reload:url" content="{{ frankenphp_hot_reload }}">
+            <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
+            <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
+        {% endif %}
+    </head>
+    <body>
+        <header class="site-header">
+            <nav class="container site-nav" aria-label="Navigation principale">
+                <a class="site-brand" href="{{ path('app_accueil') }}">
+                    <img class="site-brand-emblem" src="/favicon.svg" alt="" width="40" height="40">
+                    <span>Vite &amp; Gourmand</span>
+                </a>
+
+                <button class="vg-btn vg-btn--secondaire site-nav-toggle" type="button"
+                        aria-expanded="false" aria-controls="site-nav-links" hidden>
+                    Menu
+                </button>
+
+                <div class="site-nav-links" id="site-nav-links">
+                    <a href="{{ path('app_accueil') }}"{% if app.request.attributes.get('_route') == 'app_accueil' %} aria-current="page"{% endif %}>
+                        Accueil
+                    </a>
+
+                    <a href="{{ path('app_menu') }}"{% if app.request.attributes.get('_route') == 'app_menu' %} aria-current="page"{% endif %}>
+                        Nos menus
+                    </a>
+
+                    {% if app.user %}
+                        {% if is_granted('ROLE_CLIENT') %}
+                            <a href="{{ path('app_profil') }}">
+                                Mon profil
+                            </a>
+
+                            <a href="{{ path('app_mes_commandes') }}">
+                                Mes commandes
+                            </a>
+                        {% endif %}
+
+                        {% if is_granted('ROLE_EMPLOYE') %}
+                            <a href="{{ path('app_gestion_commandes') }}">
+                                Commandes
+                            </a>
+                            <a href="{{ path('app_gestion_avis') }}"{% if app.request.attributes.get('_route') == 'app_gestion_avis' %} aria-current="page"{% endif %}>
+                                Modérer les avis
+                            </a>
+                        {% endif %}
+
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('app_admin_statistiques') }}">
+                                Statistiques
+                            </a>
+
+                            <a href="{{ path('app_admin_employe_creer') }}">
+                                Créer un employé
+                            </a>
+                        {% endif %}
+
+                        <a href="{{ path('app_logout') }}">
+                            Se déconnecter
+                        </a>
+                    {% else %}
+                        <a class="vg-btn vg-btn--secondaire" href="{{ path('app_login') }}"{% if app.request.attributes.get('_route') == 'app_login' %} aria-current="page"{% endif %}>
+                            Connexion
+                        </a>
+                    {% endif %}
+                </div>
+            </nav>
+        </header>
+        <div class="site-content">
+            {% block body %}{% endblock %}
+        </div>
+        {% include 'partials/footer.html.twig' %}
+    </body>
+</html>

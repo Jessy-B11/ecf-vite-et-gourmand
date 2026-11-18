@@ -1,0 +1,137 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Commande n°{{ commande.id }} — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    {% set statuts = {
+        'en_attente': 'En attente de validation',
+        'acceptee': 'Acceptée',
+        'en_preparation': 'En préparation',
+        'en_livraison': 'En livraison',
+        'livree': 'Livrée',
+        'attente_retour_materiel': 'En attente du retour du matériel',
+        'terminee': 'Terminée',
+        'annulee': 'Annulée'
+    } %}
+
+    <main class="container commande-page commande-detail">
+        <h1>Commande n°{{ commande.id }}</h1>
+        {% for type, messages in app.flashes() %}
+            {% for message in messages %}
+                <p role="{{ type == 'warning' ? 'alert' : 'status' }}">
+                    {{ message }}
+                </p>
+            {% endfor %}
+        {% endfor %}
+
+        <p class="commande-introduction">
+            Statut : <strong>{{ statuts[commande.statut]|default(commande.statut) }}</strong>
+        </p>
+
+        <div class="commande-fields">
+            <div class="commande-layout">
+                <section class="menu-card commande-summary" aria-labelledby="details-prestation">
+                    <h2 id="details-prestation">Votre prestation</h2>
+                    <dl class="commande-amounts commande-detail-prestation">
+                        <div>
+                            <dt>Menu</dt>
+                            <dd>{{ commande.menu.nom }}</dd>
+                        </div>
+                        <div>
+                            <dt>Date</dt>
+                            <dd>
+                                {{ commande.datePrestation|date('d/m/Y') }}
+                                à {{ commande.heureLivraison|date('H:i') }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Nombre de personnes</dt>
+                            <dd>{{ commande.nombrePersonnes }}</dd>
+                        </div>
+                        <div>
+                            <dt>Livraison</dt>
+                            <dd>
+                                {{ commande.adresseLivraison }}<br>
+                                {{ commande.codePostalLivraison }} {{ commande.villeLivraison }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Téléphone de contact</dt>
+                            <dd>{{ commande.telephoneContact }}</dd>
+                        </div>
+                    </dl>
+                </section>
+
+                <section class="menu-card commande-summary" aria-labelledby="details-prix">
+                    <h2 id="details-prix">Montants enregistrés</h2>
+                    <dl class="commande-amounts">
+                        <div>
+                            <dt>Menu avant remise</dt>
+                            <dd>{{ (commande.montantMenuCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Remise</dt>
+                            <dd>{{ (commande.montantRemiseCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Livraison</dt>
+                            <dd>{{ (commande.fraisLivraisonCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div class="commande-total confirmation-total">
+                            <dt>Total</dt>
+                            <dd>{{ (commande.montantTotalCentimes / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                    </dl>
+                </section>
+            </div>
+
+            <section class="menu-card" aria-labelledby="historique-commande">
+                <h2 id="historique-commande">Suivi de votre commande</h2>
+                <ol class="commande-history" role="list">
+                    {% for etape in historique %}
+                        <li>
+                            <strong>{{ statuts[etape.statut]|default(etape.statut) }}</strong>
+                            <time datetime="{{ etape.dateChangement|date('c', 'Europe/Paris') }}">
+                                {{ etape.dateChangement|date('d/m/Y à H:i', 'Europe/Paris') }}
+                            </time>
+                        </li>
+                    {% else %}
+                        <li>Aucune étape disponible pour le moment.</li>
+                    {% endfor %}
+                </ol>
+            </section>
+
+            {% if commande.statut == 'en_attente' %}
+                <section class="menu-card" aria-labelledby="annulation-commande">
+                    <h2 id="annulation-commande">Gérer ma commande</h2>
+                    <p>
+                        Vous pouvez annuler cette commande tant que
+                        notre équipe ne l’a pas acceptée.
+                    </p>
+                    <div class="commande-detail-actions">
+                        <a class="vg-btn vg-btn--secondaire"
+                            href="{{ path('app_mes_commandes_modifier', {id: commande.id}) }}"
+                        >
+                            Modifier ma commande
+                        </a>
+                        <form method="post" action="{{ path('app_mes_commandes_annuler', {id: commande.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('annuler_commande_' ~ commande.id) }}">
+                            <button class="vg-btn vg-btn--secondaire" type="submit">Annuler ma commande</button>
+                        </form>
+                    </div>
+                </section>
+            {% endif %}
+
+            <div class="commande-detail-actions">
+                {% if commande.statut == 'terminee' %}
+                    <a class="vg-btn" href="{{ path('app_commande_avis', {id: commande.id}) }}">
+                        Laisser un avis
+                    </a>
+                {% endif %}
+                <a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes') }}">
+                    Revenir à mes commandes
+                </a>
+            </div>
+        </div>
+    </main>
+{% endblock %}

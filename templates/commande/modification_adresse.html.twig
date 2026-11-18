@@ -1,0 +1,103 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérifier la nouvelle adresse — Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <main class="container commande-page adresse-page">
+        <h1>Modifier la commande n°{{ commande.id }}</h1>
+        <p class="commande-introduction">Menu choisi : {{ commande.menu.nom }}</p>
+
+        <div class="commande-layout">
+            <section class="menu-card" aria-labelledby="adresses-proposees-titre">
+                <h2 id="adresses-proposees-titre">Adresses proposées</h2>
+                <p id="adresse-help">Sélectionnez l’adresse correspondant au lieu de livraison souhaité.</p>
+
+                {{ form_start(confirmationForm, {
+                    attr: confirmationForm.vars.attr|merge({class: (confirmationForm.vars.attr.class|default('') ~ ' adresse-form')|trim})
+                }) }}
+                {% if confirmationForm.vars.errors|length %}
+                    <div class="form-error" role="alert">{{ form_errors(confirmationForm) }}</div>
+                {% endif %}
+
+                <fieldset class="adresse-options" aria-describedby="adresse-help{% if confirmationForm.adresse.vars.errors|length %} adresse-errors{% endif %}">
+                    <legend>{{ confirmationForm.adresse.vars.label }}</legend>
+                    {% if confirmationForm.adresse.vars.errors|length %}
+                        <div class="form-error" id="adresse-errors" role="alert">{{ form_errors(confirmationForm.adresse) }}</div>
+                    {% endif %}
+                    <div class="adresse-list">
+                        {% for choix in confirmationForm.adresse %}
+                            <div class="adresse-choice">
+                                {{ form_widget(choix) }}
+                                {{ form_label(choix) }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+
+                <button class="vg-btn" type="submit">Vérifier l’adresse et recalculer le total</button>
+                {{ form_end(confirmationForm) }}
+            </section>
+
+            <aside class="menu-card commande-summary" aria-labelledby="nouveau-recapitulatif">
+                <h2 id="nouveau-recapitulatif">Récapitulatif des modifications</h2>
+                <h3 class="menu-card-title">{{ commande.menu.nom }}</h3>
+
+                {% if recapitulatif is not null %}
+                    <dl class="commande-amounts">
+                        <div>
+                            <dt>Adresse</dt>
+                            <dd>{{ recapitulatif.adresse }}</dd>
+                        </div>
+                        <div>
+                            <dt>Prestation</dt>
+                            <dd>{{ recapitulatif.date_prestation|date('d/m/Y') }} à {{ recapitulatif.heure_livraison }}</dd>
+                        </div>
+                        <div>
+                            <dt>Nombre de personnes</dt>
+                            <dd>{{ recapitulatif.nombre_personnes }}</dd>
+                        </div>
+                        <div>
+                            <dt>Menu avant remise</dt>
+                            <dd>{{ (recapitulatif.montant_menu / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>Remise</dt>
+                            <dd>{{ (recapitulatif.remise / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div>
+                            <dt>{% if recapitulatif.adresse_identique %}Frais de livraison conservés{% else %}Frais de livraison recalculés{% endif %}</dt>
+                            <dd>{{ (recapitulatif.frais_livraison / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                        <div class="commande-total">
+                            <dt>Nouveau total</dt>
+                            <dd>{{ (recapitulatif.total / 100)|number_format(2, ',', ' ') }} €</dd>
+                        </div>
+                    </dl>
+
+                    {% if recapitulatif.distance_metres is not null %}
+                        <p class="commande-note">Distance routière aller : {{ (recapitulatif.distance_metres / 1000)|number_format(3, ',', ' ') }} km.</p>
+                    {% endif %}
+
+                    <a class="vg-btn" href="{{ path('app_modification_commande_confirmation', {jeton: jeton_confirmation}) }}">Continuer vers la confirmation</a>
+                    <p class="commande-note">Aucune modification n’est encore enregistrée.</p>
+                {% else %}
+                    <p>Choisissez une adresse puis calculez le total pour afficher le récapitulatif.</p>
+                    <dl class="commande-amounts">
+                        <div>
+                            <dt>Livraison</dt>
+                            <dd>À calculer</dd>
+                        </div>
+                        <div class="commande-total">
+                            <dt>Nouveau total</dt>
+                            <dd>À calculer</dd>
+                        </div>
+                    </dl>
+                {% endif %}
+            </aside>
+        </div>
+
+        <p>
+            <a class="vg-btn vg-btn--secondaire" href="{{ path('app_mes_commandes_modifier', {id: commande.id}) }}">Recommencer la modification</a>
+        </p>
+    </main>
+{% endblock %}

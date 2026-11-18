@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Confirmation de commande</title>
+    </head>
+    <body>
+        <h1>Merci pour votre commande</h1>
+
+        <p>Bonjour {{ commande.utilisateur.prenom }},</p>
+
+        <p>
+            Votre commande n°{{ commande.id }} est enregistrée.
+            Elle est en attente de validation par notre équipe.
+        </p>
+
+        <h2>Votre récapitulatif</h2>
+
+        <p>Menu : {{ commande.menu.nom }}</p>
+
+        <p>
+            Prestation :
+            {{ commande.datePrestation|date('d/m/Y') }}
+            à {{ commande.heureLivraison|date('H:i') }}
+        </p>
+
+        <p>
+            Nombre de personnes : {{ commande.nombrePersonnes }}
+        </p>
+
+        <p>
+            Livraison :
+            {{ commande.adresseLivraison }},
+            {{ commande.codePostalLivraison }}
+            {{ commande.villeLivraison }}
+        </p>
+
+        <p>
+            Menu avant remise :
+            {{ (commande.montantMenuCentimes / 100)
+                |number_format(2, ',', ' ') }} €
+        </p>
+
+        <p>
+            Remise :
+            {{ (commande.montantRemiseCentimes / 100)
+                |number_format(2, ',', ' ') }} €
+        </p>
+
+        <p>
+            Livraison :
+            {{ (commande.fraisLivraisonCentimes / 100)
+                |number_format(2, ',', ' ') }} €
+        </p>
+
+        <p>
+            <strong>
+                Total :
+                {{ (commande.montantTotalCentimes / 100)
+                    |number_format(2, ',', ' ') }} €
+            </strong>
+        </p>
+
+        <p>À bientôt,<br>L’équipe Vite & Gourmand</p>
+    </body>
+</html>
